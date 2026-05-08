@@ -6,23 +6,7 @@
     <title>CABO DE GUERRA - U14</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="shortcut icon" href="img/LOGO.ico">
-    <style>
-    /* Esconde os botões e formulários de lançamento para o público */
-    .box:has(h3:contains("Lançar Ponto")), 
-    .btn-add, 
-    .btn-reset, 
-    #btnFinalizar,
-    .btn-undo,
-    select {
-        display: none !important;
-    }
-
-    /* Ajusta o grid para o público não ver buracos vazios */
-    .grid-3 .box:has(h3:contains("Histórico")) {
-        grid-column: span 3;
-    }
-</style>
-
+    <!-- Removi o CSS de esconder botões daqui para que VOCÊ consiga usar -->
 </head>
 <body>
 
@@ -78,13 +62,17 @@
         </div>
     </div>
 
-    <button id="btnFinalizar" onclick="liberarMataMata()" style="background: #e53935; color: white; font-weight: bold; margin-bottom: 20px; cursor: pointer; border: none; border-radius: 5px;">
-        FINALIZAR GRUPOS E GERAR QUARTAS (3A + 3B + 2C)
-    </button>
+    <!-- Botão de Finalizar Grupos -->
+    <div style="text-align: center; margin: 20px 0;">
+        <button id="btnFinalizar" onclick="liberarMataMata()" style="background: #e53935; color: white; font-weight: bold; padding: 15px 30px; cursor: pointer; border: none; border-radius: 5px; font-size: 16px;">
+            FINALIZAR GRUPOS E GERAR QUARTAS (3A + 3B + 2C)
+        </button>
+    </div>
 
     <div class="fase-bracket">
         <h2>Mata-Mata U14 (Clique no Vencedor)</h2>
         <div class="grid-3">
+            <!-- QUARTAS -->
             <div>
                 <div class="match-header">QUARTAS DE FINAL</div>
                 <div class="match-container">
@@ -109,6 +97,7 @@
                 </div>
             </div>
 
+            <!-- SEMI -->
             <div>
                 <div class="match-header">SEMI-FINAL</div>
                 <div class="match-container" style="margin-top: 40px;">
@@ -123,6 +112,7 @@
                 </div>
             </div>
 
+            <!-- FINAL -->
             <div>
                 <div class="match-header" style="background:#ffd700; color:#000">GRANDE FINAL</div>
                 <div class="match-container" style="margin-top: 100px;">
@@ -131,33 +121,34 @@
                     <button class="equipe-btn" onclick="vencer('f', this)" id="f2">Finalista 2</button>
                 </div>
 
-                <div id="podio">
-                    <span style="font-size: 20px;">🏆</span>
+                <div id="podio" style="display:none; text-align: center; margin-top: 20px; border: 2px solid #ffd700; padding: 10px; border-radius: 10px;">
+                    <span style="font-size: 30px;">🏆</span>
                     <h3 style="margin: 5px 0; color: #b8860b;">CAMPEÃO U14</h3>
-                    <div id="campeao_nome" style="font-weight: bold; font-size: 18px;">---</div>
+                    <div id="campeao_nome" style="font-weight: bold; font-size: 22px; color: #333;">---</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <button class="btn-reset" onclick="confirmarReset()">ZERAR TODO O PLACAR U14</button>
+    <button class="btn-reset" onclick="confirmarReset()" style="margin-top: 50px; background: #555; color: white;">ZERAR TODO O PLACAR U14</button>
 
-    <div class="footer-logos">
-        <span style="text-align: center; display: block; font-weight: bold;">Realização e Apoio</span>
-        <div class="logo-grid">
-            <img src="img/robotec_logo.png" alt="Robotec">
-            <img src="img/fira_logo.png" alt="Fira Brasil">
-            <img src="img/coc_logo.png" alt="COC">
-            <img src="img/robocity_logo.png" alt="Robo City">
+    <div class="footer-logos" style="margin-top: 40px;">
+        <span style="text-align: center; display: block; font-weight: bold; margin-bottom: 10px;">Realização e Apoio</span>
+        <div class="logo-grid" style="display: flex; justify-content: center; gap: 20px; align-items: center; flex-wrap: wrap;">
+            <img src="img/robotec_logo.png" alt="Robotec" style="height: 50px;">
+            <img src="img/fira_logo.png" alt="Fira Brasil" style="height: 50px;">
+            <img src="img/coc_logo.png" alt="COC" style="height: 50px;">
+            <img src="img/robocity_logo.png" alt="Robo City" style="height: 50px;">
         </div>
     </div>
 </div>
-<!-- SDKs do Firebase (Versão compatível com navegador) -->
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
 
-    <!-- O SEU SCRIPT (deve vir DEPOIS do firebase) -->
-    <script src="js/script.js"></script>
-</body>
+<!-- SDKs do Firebase (Versão compatível com navegador) -->
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+<!-- O SEU SCRIPT -->
+<script src="js/script.js"></script>
+
 </body>
 </html>
