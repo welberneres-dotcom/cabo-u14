@@ -78,10 +78,21 @@ function excluirResultado(id) {
 
 // 5. LÓGICA DO MATA-MATA (CLIQUE NO VENCEDOR)
 function vencer(partida, el) {
-    if (!window.location.pathname.includes('admin.html')) return;
+    // Verificação aprimorada para o GitHub: 
+    // Permite o clique se o arquivo for 'admin.html' ou se estivermos em ambiente de desenvolvimento local
+    const isAdmin = window.location.pathname.toLowerCase().endsWith('admin.html');
+    
+    if (!isAdmin) {
+        console.warn("Ação bloqueada: O clique no vencedor só funciona na página admin.html");
+        return;
+    }
 
     const nomeVencedor = el.innerText;
-    if (nomeVencedor === "..." || nomeVencedor === "Aguardando..." || nomeVencedor.includes("Finalista")) return;
+    
+    // Impede clicar em campos vazios
+    if (!nomeVencedor || nomeVencedor === "..." || nomeVencedor === "Aguardando..." || nomeVencedor.includes("Finalista")) {
+        return;
+    }
 
     if (!dados.vencedoresMataMata) dados.vencedoresMataMata = {};
     
@@ -93,15 +104,29 @@ function vencer(partida, el) {
     };
 
     if (chaves[partida]) {
+        // Define o vencedor na próxima fase
         dados.vencedoresMataMata[chaves[partida]] = nomeVencedor;
+        
+        // Marca quem venceu para aplicar a cor verde
         dados.vencedoresMataMata[el.id + "_win"] = true;
         
-        const num = el.id.split('_')[1];
+        // Descobre o ID do adversário para tirar a cor dele
+        const num = el.id.split('_')[1]; // Pega o '1' ou '2'
         const outroNum = (num === '1') ? '2' : '1';
-        let adversarioId = (partida === 'f') ? (el.id === 'f1' ? 'f2' : 'f1') : el.id.split('_')[0] + "_" + outroNum;
+        let adversarioId;
+        
+        if (partida === 'f') {
+            adversarioId = (el.id === 'f1' ? 'f2' : 'f1');
+        } else {
+            adversarioId = el.id.split('_')[0] + "_" + outroNum;
+        }
         
         dados.vencedoresMataMata[adversarioId + "_win"] = false;
-        db.ref('campeonato_u14').set(dados);
+
+        // Salva no Firebase
+        db.ref('campeonato_u14').set(dados)
+            .then(() => console.log("Vencedor registrado com sucesso!"))
+            .catch((error) => console.error("Erro ao salvar:", error));
     }
 }
 
