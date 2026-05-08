@@ -10,7 +10,7 @@ const firebaseConfig = {
     measurementId: "G-GTE4BHFGHK"
 };
 
-// Inicializa o Firebase (Sintaxe Compat)
+// Inicializa o Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -23,6 +23,7 @@ const equipesOriginal = [
     { nome: "STARTEC", grupo: "C", pts: 0, v: 0, e: 0, d: 0 }, { nome: "CAV NEO JAZZ", grupo: "C", pts: 0, v: 0, e: 0, d: 0 }
 ];
 
+// Estado inicial com equipes para não carregar vazio
 let dadosCompeticao = {
     equipes: JSON.parse(JSON.stringify(equipesOriginal)),
     log: [],
@@ -30,15 +31,23 @@ let dadosCompeticao = {
     vencedoresMataMata: {}
 };
 
-// --- ESCUTAR MUDANÇAS NA NUVEM ---
+// 1. RODAR RENDER IMEDIATAMENTE (Para mostrar os nomes antes mesmo da internet conectar)
+document.addEventListener('DOMContentLoaded', () => {
+    render(); 
+});
+
+// 2. ESCUTAR MUDANÇAS NA NUVEM
 db.ref('campeonato_u14').on('value', (snapshot) => {
     const data = snapshot.val();
-    if (data) {
+    if (data && data.equipes) {
         dadosCompeticao = data;
         render();
     } else {
+        // Se o banco estiver vazio, ele cria a estrutura inicial baseada no equipesOriginal
         salvarDados();
     }
+}, (error) => {
+    console.error("Erro de conexão com Firebase:", error);
 });
 
 function salvarDados() {
@@ -76,16 +85,27 @@ function alterarPontos(n, r, f) {
 }
 
 function render() {
+    // Verifica se o elemento existe na página antes de tentar escrever nele
+    const tbA = document.querySelector("#tabelaA tbody");
+    const tbB = document.querySelector("#tabelaB tbody");
+    const tbC = document.querySelector("#tabelaC tbody");
+
+    if(!tbA || !tbB || !tbC) return;
+
     const sort = (g) => dadosCompeticao.equipes.filter(x => x.grupo === g).sort((a,b) => b.pts - a.pts || b.v - a.v);
+    
     const A = sort("A"), B = sort("B"), C = sort("C");
 
-    document.querySelector("#tabelaA tbody").innerHTML = A.map((e,i) => `<tr><td>${i+1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`).join('');
-    document.querySelector("#tabelaB tbody").innerHTML = B.map((e,i) => `<tr><td>${i+1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`).join('');
-    document.querySelector("#tabelaC tbody").innerHTML = C.map((e,i) => `<tr><td>${i+1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`).join('');
+    tbA.innerHTML = A.map((e,i) => `<tr><td>${i+1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`).join('');
+    tbB.innerHTML = B.map((e,i) => `<tr><td>${i+1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`).join('');
+    tbC.innerHTML = C.map((e,i) => `<tr><td>${i+1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`).join('');
     
-    document.getElementById('historico').innerHTML = (dadosCompeticao.log || []).map(l => `
-        <div class="history-item"><span>${l.n} (${l.r})</span><button class="btn-undo" onclick="anular(${l.id})">X</button></div>
-    `).join('');
+    const histDiv = document.getElementById('historico');
+    if(histDiv) {
+        histDiv.innerHTML = (dadosCompeticao.log || []).map(l => `
+            <div class="history-item"><span>${l.n} (${l.r})</span><button class="btn-undo" onclick="anular(${l.id})">X</button></div>
+        `).join('');
+    }
 
     if(dadosCompeticao.faseGruposFinalizada) {
         configurarMataMata(A, B, C);
@@ -131,6 +151,7 @@ function vencer(fase, btn) {
 
     if(!dadosCompeticao.vencedoresMataMata) dadosCompeticao.vencedoresMataMata = {};
     
+    // Atualização visual imediata para os próximos botões
     if(fase === 'q1') document.getElementById('s1_1').innerText = nome;
     if(fase === 'q4') document.getElementById('s1_2').innerText = nome;
     if(fase === 'q2') document.getElementById('s2_1').innerText = nome;
@@ -139,10 +160,13 @@ function vencer(fase, btn) {
     if(fase === 's2') document.getElementById('f2').innerText = nome;
 
     if(fase === 'f') {
-        document.getElementById('podio').style.display = 'block';
-        document.getElementById('campeao_nome').innerText = nome;
+        const podio = document.getElementById('podio');
+        const camp = document.getElementById('campeao_nome');
+        if(podio) podio.style.display = 'block';
+        if(camp) camp.innerText = nome;
     }
 
+    // Grava todos os estados dos botões no objeto para salvar na nuvem
     document.querySelectorAll('.equipe-btn').forEach(b => {
         if(b.innerText !== "..." && !b.innerText.includes("Venc.")) {
             dadosCompeticao.vencedoresMataMata[b.id] = b.innerText;
