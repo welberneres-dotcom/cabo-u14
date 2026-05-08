@@ -6,6 +6,22 @@
     <title>CABO DE GUERRA - U14</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="shortcut icon" href="img/LOGO.ico">
+    <style>
+    /* Esconde os botões e formulários de lançamento para o público */
+    .box:has(h3:contains("Lançar Ponto")), 
+    .btn-add, 
+    .btn-reset, 
+    #btnFinalizar,
+    .btn-undo,
+    select {
+        display: none !important;
+    }
+
+    /* Ajusta o grid para o público não ver buracos vazios */
+    .grid-3 .box:has(h3:contains("Histórico")) {
+        grid-column: span 3;
+    }
+</style>
 
 </head>
 <body>
