@@ -116,12 +116,44 @@ function render() {
 }
 
 function configurarMataMata(A, B, C) {
-    const seeds = {
-        'q1_1': A[0].nome, 'q1_2': C[1].nome,
-        'q2_1': B[0].nome, 'q2_2': A[2].nome,
-        'q3_1': C[0].nome, 'q3_2': B[2].nome,
-        'q4_1': A[1].nome, 'q4_2': B[1].nome
+    // 1. Mapeia quem deve estar em cada vaga das Quartas
+    const chavesIniciais = {
+        'q1_1': A[0] ? A[0].nome : "...",
+        'q1_2': C[1] ? C[1].nome : "...",
+        'q2_1': B[0] ? B[0].nome : "...",
+        'q2_2': A[2] ? A[2].nome : "...",
+        'q3_1': C[0] ? C[0].nome : "...",
+        'q3_2': B[2] ? B[2].nome : "...",
+        'q4_1': A[1] ? A[1].nome : "...",
+        'q4_2': B[1] ? B[1].nome : "..."
     };
+
+    // 2. Aplica os nomes nos botões das Quartas
+    for (let id in chavesIniciais) {
+        const btn = document.getElementById(id);
+        if (btn) {
+            // Se já houver um vencedor marcado na nuvem, usamos ele, senão usamos a chave inicial
+            btn.innerText = dadosCompeticao.vencedoresMataMata[id] || chavesIniciais[id];
+        }
+    }
+
+    // 3. Aplica os vencedores das Semis e Final que estão salvos na nuvem
+    const outrosIDs = ['s1_1', 's1_2', 's2_1', 's2_2', 'f1', 'f2'];
+    outrosIDs.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn && dadosCompeticao.vencedoresMataMata[id]) {
+            btn.innerText = dadosCompeticao.vencedoresMataMata[id];
+        }
+    });
+
+    // 4. Mostra o pódio se houver campeão
+    if (dadosCompeticao.vencedoresMataMata['campeao']) {
+        const podio = document.getElementById('podio');
+        const campNome = document.getElementById('campeao_nome');
+        if (podio) podio.style.display = 'block';
+        if (campNome) campNome.innerText = dadosCompeticao.vencedoresMataMata['campeao'];
+    }
+}
 
     for(let id in seeds) {
         const btn = document.getElementById(id);
@@ -140,41 +172,53 @@ function configurarMataMata(A, B, C) {
 }
 
 function liberarMataMata() {
-    if (confirm("Finalizar grupos?")) {
+    if (confirm("Finalizar grupos do U14? (3A + 3B + 2C serão classificados)")) {
         dadosCompeticao.faseGruposFinalizada = true;
+        
+        // Forçamos o cálculo inicial do mata-mata antes de salvar
+        const sort = (g) => dadosCompeticao.equipes.filter(x => x.grupo === g).sort((a,b) => b.pts - a.pts || b.v - a.v);
+        const A = sort("A"), B = sort("B"), C = sort("C");
+        
+        // Define as chaves iniciais das quartas
+        dadosCompeticao.vencedoresMataMata['q1_1'] = A[0].nome;
+        dadosCompeticao.vencedoresMataMata['q1_2'] = C[1].nome;
+        dadosCompeticao.vencedoresMataMata['q2_1'] = B[0].nome;
+        dadosCompeticao.vencedoresMataMata['q2_2'] = A[2].nome;
+        dadosCompeticao.vencedoresMataMata['q3_1'] = C[0].nome;
+        dadosCompeticao.vencedoresMataMata['q3_2'] = B[2].nome;
+        dadosCompeticao.vencedoresMataMata['q4_1'] = A[1].nome;
+        dadosCompeticao.vencedoresMataMata['q4_2'] = B[1].nome;
+
         salvarDados();
+        alert("Fase de grupos finalizada! O Mata-Mata foi gerado.");
     }
 }
-
 function vencer(fase, btn) {
-    if(!dadosCompeticao.faseGruposFinalizada) return;
+    if (!dadosCompeticao.faseGruposFinalizada) {
+        alert("Finalize a fase de grupos primeiro!");
+        return;
+    }
     
     const nome = btn.innerText;
-    if(nome === "..." || nome.includes("Venc.")) return;
+    if (nome === "..." || nome.includes("Venc.")) return;
 
-    if(!dadosCompeticao.vencedoresMataMata) dadosCompeticao.vencedoresMataMata = {};
+    if (!dadosCompeticao.vencedoresMataMata) dadosCompeticao.vencedoresMataMata = {};
     
-    // Atualização visual imediata para os próximos botões
-    if(fase === 'q1') document.getElementById('s1_1').innerText = nome;
-    if(fase === 'q4') document.getElementById('s1_2').innerText = nome;
-    if(fase === 'q2') document.getElementById('s2_1').innerText = nome;
-    if(fase === 'q3') document.getElementById('s2_2').innerText = nome;
-    if(fase === 's1') document.getElementById('f1').innerText = nome;
-    if(fase === 's2') document.getElementById('f2').innerText = nome;
+    // Marca visualmente o vencedor no banco
+    dadosCompeticao.vencedoresMataMata[btn.id] = nome;
 
-    if(fase === 'f') {
-        const podio = document.getElementById('podio');
-        const camp = document.getElementById('campeao_nome');
-        if(podio) podio.style.display = 'block';
-        if(camp) camp.innerText = nome;
+    // Lógica de destino: Quem ganha J1 vai para S1_1, etc.
+    if (btn.id === 'q1_1' || btn.id === 'q1_2') dadosCompeticao.vencedoresMataMata['s1_1'] = nome;
+    if (btn.id === 'q4_1' || btn.id === 'q4_2') dadosCompeticao.vencedoresMataMata['s1_2'] = nome;
+    if (btn.id === 'q2_1' || btn.id === 'q2_2') dadosCompeticao.vencedoresMataMata['s2_1'] = nome;
+    if (btn.id === 'q3_1' || btn.id === 'q3_2') dadosCompeticao.vencedoresMataMata['s2_2'] = nome;
+    
+    if (btn.id === 's1_1' || btn.id === 's1_2') dadosCompeticao.vencedoresMataMata['f1'] = nome;
+    if (btn.id === 's2_1' || btn.id === 's2_2') dadosCompeticao.vencedoresMataMata['f2'] = nome;
+
+    if (btn.id === 'f1' || btn.id === 'f2') {
+        dadosCompeticao.vencedoresMataMata['campeao'] = nome;
     }
-
-    // Grava todos os estados dos botões no objeto para salvar na nuvem
-    document.querySelectorAll('.equipe-btn').forEach(b => {
-        if(b.innerText !== "..." && !b.innerText.includes("Venc.")) {
-            dadosCompeticao.vencedoresMataMata[b.id] = b.innerText;
-        }
-    });
 
     salvarDados();
 }
