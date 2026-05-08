@@ -133,12 +133,18 @@ function render() {
             if (t) t.innerHTML = trs(g);
         });
 
+        
         const hist = document.getElementById('historico');
         if (hist) {
             hist.innerHTML = (dados.log || []).map(l => `
-                <div class="history-item" style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:8px; margin-bottom:5px; border-radius:4px; border-left:4px solid #007bff;">
-                    <span><strong>${l.n}</strong>: ${l.r === 'V' ? 'Vitória' : l.r === 'E' ? 'Empate' : 'Derrota'}</span>
-                    <button onclick="excluirResultado(${l.id})" style="background:#dc3545; color:white; border:none; border-radius:3px; padding:2px 8px; cursor:pointer;">X</button>
+                <div class="history-item" style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:5px 10px; margin-bottom:5px; border-radius:4px; border-left:4px solid #007bff; font-size: 14px;">
+                    <div style="display: flex; flex-direction: column;">
+                        <strong>${l.n}</strong>
+                        <span style="font-size: 12px; color: #666;">${l.r === 'V' ? 'Vitória' : l.r === 'E' ? 'Empate' : 'Derrota'}</span>
+                    </div>
+                    <button onclick="excluirResultado(${l.id})" style="background:#dc3545; color:white; border:none; border-radius:4px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor:pointer; font-size: 12px; transition: 0.2s;">
+                        X
+                    </button>
                 </div>
             `).join('');
         }
