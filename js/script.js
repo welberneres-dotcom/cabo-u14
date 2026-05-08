@@ -1,4 +1,4 @@
-// 1. Configuração do Firebase
+// Configuração
 const firebaseConfig = {
     apiKey: "AIzaSyDkUlXPmG5_lNrBFmtX8Cbs05RzNmhnPME",
     authDomain: "cabo-u14.firebaseapp.com",
@@ -22,34 +22,43 @@ const equipesOriginal = [
     { nome: "STARTEC", grupo: "C", pts: 0, v: 0, e: 0, d: 0 }, { nome: "CAV NEO JAZZ", grupo: "C", pts: 0, v: 0, e: 0, d: 0 }
 ];
 
-let dadosCompeticao = {
-    equipes: JSON.parse(JSON.stringify(equipesOriginal)),
-    log: [],
-    faseGruposFinalizada: false,
-    vencedoresMataMata: {}
-};
+let dadosCompeticao = null;
 
-// Sincronização Realtime
+// Escuta o banco de dados
 db.ref('campeonato_u14').on('value', (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-        // Blindagem total contra campos nulos no banco
-        dadosCompeticao = {
-            equipes: data.equipes || JSON.parse(JSON.stringify(equipesOriginal)),
-            log: data.log || [],
-            faseGruposFinalizada: data.faseGruposFinalizada || false,
-            vencedoresMataMata: data.vencedoresMataMata || {}
-        };
+    if (data && data.equipes) {
+        dadosCompeticao = data;
         render();
+    } else {
+        // Se o banco estiver vazio ou corrompido, inicializa com o padrão
+        resetarBancoAForca();
     }
+}, (erro) => {
+    console.error("Erro no Firebase:", erro);
 });
 
-function salvarDados() {
-    db.ref('campeonato_u14').set(dadosCompeticao);
+function resetarBancoAForca() {
+    const inicial = {
+        equipes: JSON.parse(JSON.stringify(equipesOriginal)),
+        log: [],
+        faseGruposFinalizada: false,
+        vencedoresMataMata: {}
+    };
+    db.ref('campeonato_u14').set(inicial).then(() => {
+        window.location.reload();
+    });
 }
 
-// Funções de Ação
+// ATENÇÃO: Esta função agora é global para você chamar no console se o botão falhar
+window.confirmarReset = function() {
+    if (confirm("Isso vai apagar TUDO. Confirmar?")) {
+        resetarBancoAForca();
+    }
+};
+
 function registrar() {
+    if (!dadosCompeticao) return;
     const n = document.getElementById('selectEquipe').value;
     const r = document.getElementById('selectResultado').value;
     const e = dadosCompeticao.equipes.find(x => x.nome === n);
@@ -57,15 +66,16 @@ function registrar() {
         if(r === 'V') { e.pts += 3; e.v += 1; }
         else if(r === 'E') { e.pts += 1; e.e += 1; }
         else { e.d += 1; }
+        if(!dadosCompeticao.log) dadosCompeticao.log = [];
         dadosCompeticao.log.unshift({id: Date.now(), n, r});
-        salvarDados();
+        db.ref('campeonato_u14').set(dadosCompeticao);
     }
 }
 
 function render() {
     try {
         const bodyA = document.querySelector("#tabelaA tbody");
-        if(!bodyA) return;
+        if(!bodyA || !dadosCompeticao) return;
 
         const sort = (g) => [...dadosCompeticao.equipes].filter(x => x.grupo === g).sort((a,b) => b.pts - a.pts || b.v - a.v);
         const A = sort("A"), B = sort("B"), C = sort("C");
@@ -76,70 +86,28 @@ function render() {
         document.querySelector("#tabelaB tbody").innerHTML = trs(B);
         document.querySelector("#tabelaC tbody").innerHTML = trs(C);
 
-        document.getElementById('historico').innerHTML = dadosCompeticao.log.map(l => `
-            <div class="history-item"><span>${l.n} (${l.r})</span><button onclick="anular(${l.id})">X</button></div>
-        `).join('');
+        const hist = document.getElementById('historico');
+        if(hist) {
+            hist.innerHTML = (dadosCompeticao.log || []).map(l => `
+                <div class="history-item"><span>${l.n} (${l.r})</span><button onclick="anular(${l.id})">X</button></div>
+            `).join('');
+        }
 
         if(dadosCompeticao.faseGruposFinalizada) configurarMataMata(A, B, C);
-    } catch(e) { console.log("Renderizando..."); }
+    } catch(err) {
+        console.warn("Erro ao renderizar, dados incompletos.");
+    }
 }
 
 function configurarMataMata(A, B, C) {
     const get = (l, p) => (l && l[p] ? l[p].nome : "...");
     const v = dadosCompeticao.vencedoresMataMata || {};
-
     const base = {
         'q1_1': get(A,0), 'q1_2': get(C,1), 'q2_1': get(B,0), 'q2_2': get(A,2),
         'q3_1': get(C,0), 'q3_2': get(B,2), 'q4_1': get(A,1), 'q4_2': get(B,1)
     };
-
-    [...Object.keys(base), 's1_1', 's1_2', 's2_1', 's2_2', 'f1', 'f2'].forEach(id => {
+    Object.keys(base).forEach(id => {
         const el = document.getElementById(id);
-        if(el) {
-            el.innerText = v[id] || base[id] || "...";
-            v[id] ? el.classList.add('venceu') : el.classList.remove('venceu');
-        }
+        if(el) el.innerText = v[id] || base[id];
     });
-
-    if(v.campeao && document.getElementById('podio')) {
-        document.getElementById('podio').style.display = 'block';
-        document.getElementById('campeao_nome').innerText = v.campeao;
-    }
-}
-
-function liberarMataMata() {
-    if(confirm("Finalizar Grupos?")) {
-        dadosCompeticao.faseGruposFinalizada = true;
-        salvarDados();
-    }
-}
-
-function vencer(fase, btn) {
-    if(!dadosCompeticao.faseGruposFinalizada) return;
-    const n = btn.innerText;
-    if(n === "...") return;
-    if(!dadosCompeticao.vencedoresMataMata) dadosCompeticao.vencedoresMataMata = {};
-    
-    dadosCompeticao.vencedoresMataMata[btn.id] = n;
-    const p = {'q1_1':'s1_1','q1_2':'s1_1','q4_1':'s1_2','q4_2':'s1_2','q2_1':'s2_1','q2_2':'s2_1','q3_1':'s2_2','q3_2':'s2_2','s1_1':'f1','s1_2':'f1','s2_1':'f2','s2_2':'f2','f1':'campeao','f2':'campeao'};
-    if(p[btn.id]) dadosCompeticao.vencedoresMataMata[p[btn.id]] = n;
-    salvarDados();
-}
-
-// 5. RESET TOTAL (Blindado)
-function confirmarReset() {
-    if (confirm("ATENÇÃO: Deseja apagar tudo e recomeçar?")) {
-        const resetDados = {
-            equipes: equipesOriginal,
-            log: [],
-            faseGruposFinalizada: false,
-            vencedoresMataMata: {}
-        };
-        db.ref('campeonato_u14').set(resetDados).then(() => {
-            alert("Dados resetados com sucesso!");
-            location.reload();
-        }).catch(err => {
-            alert("Erro ao resetar. Tente forçar pelo console.");
-        });
-    }
 }
