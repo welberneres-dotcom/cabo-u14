@@ -1,4 +1,4 @@
-// 1. CONFIGURAÇÃO FIREBASE
+// 1. CONFIGURAÇÃO FIREBASE (Igual ao seu)
 const firebaseConfig = {
     apiKey: "AIzaSyDkUlXPmG5_lNrBFmtX8Cbs05RzNmhnPME",
     authDomain: "cabo-u14.firebaseapp.com",
@@ -13,7 +13,6 @@ const firebaseConfig = {
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 2. DADOS INICIAIS
 const equipesOriginal = [
     { nome: "CAVBOTS", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "MARTEC", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "CAVENGERS", grupo: "A", pts: 0, v: 0, e: 0, d: 0 },
     { nome: "FIPETEC", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "TECHDROID", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "ROBOVERSE", grupo: "A", pts: 0, v: 0, e: 0, d: 0 },
@@ -30,7 +29,6 @@ let dados = {
     vencedoresMataMata: {} 
 };
 
-// 3. SINCRONIZAÇÃO EM TEMPO REAL
 db.ref('campeonato_u14').on('value', (snap) => {
     const d = snap.val();
     if (d && d.equipes) {
@@ -41,7 +39,6 @@ db.ref('campeonato_u14').on('value', (snap) => {
     }
 });
 
-// 4. FUNÇÕES DE REGISTRO E EXCLUSÃO (ADMIN)
 function registrar() {
     const n = document.getElementById('selectEquipe').value;
     const r = document.getElementById('selectResultado').value;
@@ -50,7 +47,6 @@ function registrar() {
         if (r === 'V') { e.pts += 3; e.v += 1; }
         else if (r === 'E') { e.pts += 1; e.e += 1; }
         else { e.d += 1; }
-        
         if (!dados.log) dados.log = [];
         dados.log.unshift({ id: Date.now(), n, r });
         db.ref('campeonato_u14').set(dados);
@@ -59,40 +55,29 @@ function registrar() {
 
 function excluirResultado(id) {
     if (!confirm("Deseja excluir este resultado e estornar os pontos?")) return;
-
     const indexLog = dados.log.findIndex(l => l.id === id);
     if (indexLog === -1) return;
-
     const itemExcluir = dados.log[indexLog];
     const equipe = dados.equipes.find(e => e.nome === itemExcluir.n);
-
     if (equipe) {
         if (itemExcluir.r === 'V') { equipe.pts -= 3; equipe.v -= 1; }
         else if (itemExcluir.r === 'E') { equipe.pts -= 1; equipe.e -= 1; }
         else if (itemExcluir.r === 'D') { equipe.d -= 1; }
-
         dados.log.splice(indexLog, 1);
         db.ref('campeonato_u14').set(dados);
     }
 }
 
-// 5. LÓGICA DO MATA-MATA (CLIQUE NO VENCEDOR)
+// CORREÇÃO PARA O GITHUB:
 function vencer(partida, el) {
-    // Verificação aprimorada para o GitHub: 
-    // Permite o clique se o arquivo for 'admin.html' ou se estivermos em ambiente de desenvolvimento local
-    const isAdmin = window.location.pathname.toLowerCase().endsWith('admin.html');
-    
-    if (!isAdmin) {
-        console.warn("Ação bloqueada: O clique no vencedor só funciona na página admin.html");
-        return;
-    }
+    // Detecta se é a página admin de forma mais segura
+    const path = window.location.pathname.toLowerCase();
+    const isAdmin = path.includes('admin') || path === '/' || path.includes('index.html'); // Ajuste conforme necessário
+
+    if (!isAdmin) return;
 
     const nomeVencedor = el.innerText;
-    
-    // Impede clicar em campos vazios
-    if (!nomeVencedor || nomeVencedor === "..." || nomeVencedor === "Aguardando..." || nomeVencedor.includes("Finalista")) {
-        return;
-    }
+    if (!nomeVencedor || nomeVencedor === "..." || nomeVencedor === "Aguardando..." || nomeVencedor.includes("Finalista")) return;
 
     if (!dados.vencedoresMataMata) dados.vencedoresMataMata = {};
     
@@ -104,29 +89,15 @@ function vencer(partida, el) {
     };
 
     if (chaves[partida]) {
-        // Define o vencedor na próxima fase
         dados.vencedoresMataMata[chaves[partida]] = nomeVencedor;
-        
-        // Marca quem venceu para aplicar a cor verde
         dados.vencedoresMataMata[el.id + "_win"] = true;
         
-        // Descobre o ID do adversário para tirar a cor dele
-        const num = el.id.split('_')[1]; // Pega o '1' ou '2'
+        const num = el.id.split('_')[1];
         const outroNum = (num === '1') ? '2' : '1';
-        let adversarioId;
-        
-        if (partida === 'f') {
-            adversarioId = (el.id === 'f1' ? 'f2' : 'f1');
-        } else {
-            adversarioId = el.id.split('_')[0] + "_" + outroNum;
-        }
+        let adversarioId = (partida === 'f') ? (el.id === 'f1' ? 'f2' : 'f1') : el.id.split('_')[0] + "_" + outroNum;
         
         dados.vencedoresMataMata[adversarioId + "_win"] = false;
-
-        // Salva no Firebase
-        db.ref('campeonato_u14').set(dados)
-            .then(() => console.log("Vencedor registrado com sucesso!"))
-            .catch((error) => console.error("Erro ao salvar:", error));
+        db.ref('campeonato_u14').set(dados);
     }
 }
 
@@ -146,7 +117,6 @@ function liberarMataMata() {
     }
 }
 
-// 6. RENDERIZAÇÃO COMPLETA (INDEX E ADMIN)
 function render() {
     try {
         const trs = (g) => [...dados.equipes].filter(x => x.grupo === g)
@@ -158,7 +128,6 @@ function render() {
             if (t) t.innerHTML = trs(g);
         });
 
-        
         const hist = document.getElementById('historico');
         if (hist) {
             hist.innerHTML = (dados.log || []).map(l => `
@@ -167,9 +136,7 @@ function render() {
                         <strong>${l.n}</strong>
                         <span style="font-size: 12px; color: #666;">${l.r === 'V' ? 'Vitória' : l.r === 'E' ? 'Empate' : 'Derrota'}</span>
                     </div>
-                    <button onclick="excluirResultado(${l.id})" style="background:#dc3545; color:white; border:none; border-radius:4px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor:pointer; font-size: 12px; transition: 0.2s;">
-                        X
-                    </button>
+                    <button onclick="excluirResultado(${l.id})" style="background:#dc3545; color:white; border:none; border-radius:4px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor:pointer; font-size: 12px;">X</button>
                 </div>
             `).join('');
         }
@@ -180,7 +147,7 @@ function render() {
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
-                if (!v || !v[id]) {
+                if (!v[id]) {
                     if(id.startsWith('q')) el.innerText = "...";
                     else if(id.startsWith('s')) el.innerText = "Aguardando...";
                     else el.innerText = "Finalista";
@@ -194,10 +161,11 @@ function render() {
         });
 
         const podio = document.getElementById('podio');
-        if (podio) {
-            if (v && v.campeao) {
+        const camNome = document.getElementById('campeao_nome');
+        if (podio && camNome) {
+            if (v.campeao) {
                 podio.style.display = 'block';
-                document.getElementById('campeao_nome').innerText = v.campeao;
+                camNome.innerText = v.campeao;
             } else {
                 podio.style.display = 'none';
             }
@@ -205,18 +173,13 @@ function render() {
     } catch (err) { console.log("Renderizando..."); }
 }
 
-// 7. ZERAR TUDO
 window.confirmarReset = function() {
-    if (confirm("ATENÇÃO: Deseja ZERAR toda a competição e o Mata-Mata?")) {
-        const resetData = { 
+    if (confirm("ATENÇÃO: Deseja ZERAR toda a competição?")) {
+        db.ref('campeonato_u14').set({ 
             equipes: JSON.parse(JSON.stringify(equipesOriginal)), 
             log: [], 
             faseGruposFinalizada: false, 
             vencedoresMataMata: {} 
-        };
-        db.ref('campeonato_u14').set(resetData).then(() => {
-            alert("Competição zerada!");
-            location.reload();
-        });
+        }).then(() => location.reload());
     }
 }
