@@ -1,60 +1,53 @@
-<!-- COLE ISSO DENTRO DO SEU INDEX.HTML ABAIXO DAS TABELAS -->
-<div class="fase-bracket">
-    <h2 style="text-align:center; color:#e53935;">MATA-MATA (U14)</h2>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PLACAR AO VIVO - U14</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="container">
+    <div class="header-container">
+        <img src="img/fira_logo.png" alt="Fira Brasil" class="header-logo">
+        <h1>CABO DE GUERRA - PLACAR AO VIVO</h1>
+        <img src="img/robotec_logo.png" alt="Robotec" class="header-logo">
+    </div>
+
     <div class="grid-3">
-        <!-- QUARTAS -->
-        <div>
-            <div class="match-header">QUARTAS DE FINAL</div>
-            <div class="match-container">
-                <button class="equipe-btn" id="q1_1">...</button>
-                <span class="vs-label">VS</span>
-                <button class="equipe-btn" id="q1_2">...</button>
-            </div>
-            <div class="match-container">
-                <button class="equipe-btn" id="q2_1">...</button>
-                <span class="vs-label">VS</span>
-                <button class="equipe-btn" id="q2_2">...</button>
-            </div>
-            <div class="match-container">
-                <button class="equipe-btn" id="q3_1">...</button>
-                <span class="vs-label">VS</span>
-                <button class="equipe-btn" id="q3_2">...</button>
-            </div>
-            <div class="match-container">
-                <button class="equipe-btn" id="q4_1">...</button>
-                <span class="vs-label">VS</span>
-                <button class="equipe-btn" id="q4_2">...</button>
-            </div>
-        </div>
+        <div><h3>Grupo A</h3><table id="tabelaA"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th><th>E</th><th>D</th></tr></thead><tbody></tbody></table></div>
+        <div><h3>Grupo B</h3><table id="tabelaB"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th><th>E</th><th>D</th></tr></thead><tbody></tbody></table></div>
+        <div><h3>Grupo C</h3><table id="tabelaC"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th><th>E</th><th>D</th></tr></thead><tbody></tbody></table></div>
+    </div>
 
-        <!-- SEMI -->
-        <div>
-            <div class="match-header">SEMI-FINAL</div>
-            <div class="match-container" style="margin-top:40px;">
-                <button class="equipe-btn" id="s1_1">Aguardando...</button>
-                <span class="vs-label">VS</span>
-                <button class="equipe-btn" id="s1_2">Aguardando...</button>
+    <div class="fase-bracket">
+        <h2 style="text-align:center; color:#e53935;">MATA-MATA (U14)</h2>
+        <div class="grid-3">
+            <div>
+                <div class="match-header">QUARTAS DE FINAL</div>
+                <div class="match-container"><button class="equipe-btn" id="q1_1">...</button><span class="vs-label">VS</span><button class="equipe-btn" id="q1_2">...</button></div>
+                <div class="match-container"><button class="equipe-btn" id="q2_1">...</button><span class="vs-label">VS</span><button class="equipe-btn" id="q2_2">...</button></div>
+                <div class="match-container"><button class="equipe-btn" id="q3_1">...</button><span class="vs-label">VS</span><button class="equipe-btn" id="q3_2">...</button></div>
+                <div class="match-container"><button class="equipe-btn" id="q4_1">...</button><span class="vs-label">VS</span><button class="equipe-btn" id="q4_2">...</button></div>
             </div>
-            <div class="match-container" style="margin-top:80px;">
-                <button class="equipe-btn" id="s2_1">Aguardando...</button>
-                <span class="vs-label">VS</span>
-                <button class="equipe-btn" id="s2_2">Aguardando...</button>
+            <div>
+                <div class="match-header">SEMI-FINAL</div>
+                <div class="match-container" style="margin-top:40px;"><button class="equipe-btn" id="s1_1">Aguardando...</button><span class="vs-label">VS</span><button class="equipe-btn" id="s1_2">Aguardando...</button></div>
+                <div class="match-container" style="margin-top:80px;"><button class="equipe-btn" id="s2_1">Aguardando...</button><span class="vs-label">VS</span><button class="equipe-btn" id="s2_2">Aguardando...</button></div>
             </div>
-        </div>
-
-        <!-- FINAL -->
-        <div>
-            <div class="match-header" style="background:#ffd700; color:#000">GRANDE FINAL</div>
-            <div class="match-container" style="margin-top:100px;">
-                <button class="equipe-btn" id="f1">Finalista</button>
-                <span class="vs-label">VS</span>
-                <button class="equipe-btn" id="f2">Finalista</button>
-            </div>
-            <!-- CAMPEÃO -->
-            <div id="podio" style="display:none; text-align:center; margin-top:20px;">
-                <span style="font-size: 40px;">🏆</span>
-                <h3 id="campeao_nome" style="color: #d4af37; font-size: 24px; margin-top: 10px;">---</h3>
+            <div>
+                <div class="match-header" style="background:#ffd700; color:#000">GRANDE FINAL</div>
+                <div class="match-container" style="margin-top:100px;"><button class="equipe-btn" id="f1">Finalista</button><span class="vs-label">VS</span><button class="equipe-btn" id="f2">Finalista</button></div>
+                <div id="podio" style="display:none; text-align:center; margin-top:20px;">
+                    <span style="font-size: 40px;">🏆</span>
+                    <h3 id="campeao_nome" style="color: #d4af37; font-size: 24px; margin-top: 10px;">---</h3>
+                </div>
             </div>
         </div>
     </div>
 </div>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>
