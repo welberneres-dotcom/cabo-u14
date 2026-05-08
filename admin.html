@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ADMIN - CABO DE GUERRA</title>
     <link rel="stylesheet" href="css/style.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body data-page="admin">
 <div class="container">
@@ -46,9 +45,9 @@
     </div>
 
     <div class="grid-3">
-        <div><h3>Grupo A</h3><table id="tabelaA"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th></tr></thead><tbody></tbody></table></div>
-        <div><h3>Grupo B</h3><table id="tabelaB"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th></tr></thead><tbody></tbody></table></div>
-        <div><h3>Grupo C</h3><table id="tabelaC"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th></tr></thead><tbody></tbody></table></div>
+        <div><h3>Grupo A</h3><table id="tabelaA"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th><th>E</th><th>D</th></tr></thead><tbody></tbody></table></div>
+        <div><h3>Grupo B</h3><table id="tabelaB"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th><th>E</th><th>D</th></tr></thead><tbody></tbody></table></div>
+        <div><h3>Grupo C</h3><table id="tabelaC"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th><th>E</th><th>D</th></tr></thead><tbody></tbody></table></div>
     </div>
 
     <button onclick="liberarMataMata()" class="btn-finalizar" style="background:#e53935; color:white; padding:15px; width:100%; font-weight:bold; border:none; border-radius:8px; cursor:pointer; margin-bottom:20px;">
@@ -103,7 +102,7 @@
                     <span class="vs-label">VS</span>
                     <button class="equipe-btn" onclick="vencer('f', this)" id="f2">Finalista</button>
                 </div>
-                <div id="podio" style="display:none; text-align:center; margin-top:20px;">
+                <div id="podio">
                     🏆 <h3 id="campeao_nome">---</h3>
                 </div>
             </div>
