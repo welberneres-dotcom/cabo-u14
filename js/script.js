@@ -10,12 +10,13 @@ const firebaseConfig = {
     measurementId: "G-GTE4BHFGHK"
 };
 
+// Inicialização segura
 if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.database();
 
-// 2. Estrutura Padrão
+// 2. Dados Iniciais
 const equipesOriginal = [
     { nome: "CAVBOTS", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "MARTEC", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "CAVENGERS", grupo: "A", pts: 0, v: 0, e: 0, d: 0 },
     { nome: "FIPETEC", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "TECHDROID", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "ROBOVERSE", grupo: "A", pts: 0, v: 0, e: 0, d: 0 },
@@ -32,11 +33,11 @@ let dadosCompeticao = {
     vencedoresMataMata: {}
 };
 
-// 3. Sincronização com Auto-Reparo
+// 3. Ouvinte do Firebase com Blindagem
 db.ref('campeonato_u14').on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
-        // Se alguma parte crucial estiver faltando no banco, o JS completa com o padrão
+        // Garantimos que nenhuma propriedade seja undefined antes de salvar no estado local
         dadosCompeticao = {
             equipes: data.equipes || JSON.parse(JSON.stringify(equipesOriginal)),
             log: data.log || [],
@@ -47,132 +48,138 @@ db.ref('campeonato_u14').on('value', (snapshot) => {
     } else {
         salvarDados();
     }
-});
+}, (error) => console.error("Erro Firebase:", error));
 
 function salvarDados() {
-    db.ref('campeonato_u14').set(dadosCompeticao).catch(e => console.error("Erro ao salvar:", e));
+    db.ref('campeonato_u14').set(dadosCompeticao);
 }
 
-// 4. Lógica de Pontuação
+// 4. Funções Principais
 function registrar() {
-    const n = document.getElementById('selectEquipe').value;
-    const r = document.getElementById('selectResultado').value;
-    const e = dadosCompeticao.equipes.find(x => x.nome === n);
+    const equipeNome = document.getElementById('selectEquipe').value;
+    const resultado = document.getElementById('selectResultado').value;
     
-    if(e) {
-        if(r === 'V') { e.pts += 3; e.v += 1; }
-        else if(r === 'E') { e.pts += 1; e.e += 1; }
-        else { e.d += 1; }
-        
-        dadosCompeticao.log.unshift({id: Date.now(), n, r});
+    // Procura a equipe com segurança
+    const equipe = (dadosCompeticao.equipes || []).find(e => e.nome === equipeNome);
+    
+    if (equipe) {
+        if (resultado === 'V') { equipe.pts += 3; equipe.v += 1; }
+        else if (resultado === 'E') { equipe.pts += 1; equipe.e += 1; }
+        else { equipe.d += 1; }
+
+        if (!dadosCompeticao.log) dadosCompeticao.log = [];
+        dadosCompeticao.log.unshift({ id: Date.now(), n: equipeNome, r: resultado });
         salvarDados();
     }
 }
 
-function anular(id) {
-    const i = dadosCompeticao.log.findIndex(x => x.id === id);
-    if(i > -1) {
-        const item = dadosCompeticao.log[i];
-        const e = dadosCompeticao.equipes.find(x => x.nome === item.n);
-        if(e) {
-            if(item.r === 'V') { e.pts -= 3; e.v -= 1; }
-            else if(item.r === 'E') { e.pts -= 1; e.e -= 1; }
-            else { e.d -= 1; }
-        }
-        dadosCompeticao.log.splice(i, 1);
-        salvarDados();
-    }
-}
-
-// 5. Renderização
 function render() {
     try {
-        const sort = (g) => [...dadosCompeticao.equipes].filter(x => x.grupo === g).sort((a,b) => b.pts - a.pts || b.v - a.v);
-        const A = sort("A"), B = sort("B"), C = sort("C");
+        const bodyA = document.querySelector("#tabelaA tbody");
+        const bodyB = document.querySelector("#tabelaB tbody");
+        const bodyC = document.querySelector("#tabelaC tbody");
+        if (!bodyA) return;
 
-        const atualizarTabela = (id, lista) => {
-            const body = document.querySelector(`#${id} tbody`);
-            if(body) body.innerHTML = lista.map((e,i) => `<tr><td>${i+1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`).join('');
+        // Ordenação segura
+        const sortEquipes = (grupo) => {
+            return [...(dadosCompeticao.equipes || [])]
+                .filter(e => e.grupo === grupo)
+                .sort((a, b) => b.pts - a.pts || b.v - a.v);
         };
 
-        atualizarTabela("tabelaA", A);
-        atualizarTabela("tabelaB", B);
-        atualizarTabela("tabelaC", C);
-        
+        const A = sortEquipes("A"), B = sortEquipes("B"), C = sortEquipes("C");
+
+        const htmlTabela = (lista) => lista.map((e, i) => 
+            `<tr><td>${i + 1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`
+        ).join('');
+
+        bodyA.innerHTML = htmlTabela(A);
+        bodyB.innerHTML = htmlTabela(B);
+        bodyC.innerHTML = htmlTabela(C);
+
+        // Histórico
         const histDiv = document.getElementById('historico');
-        if(histDiv) {
-            histDiv.innerHTML = dadosCompeticao.log.map(l => `
-                <div class="history-item"><span>${l.n} (${l.r})</span><button class="btn-undo" onclick="anular(${l.id})">X</button></div>
+        if (histDiv) {
+            histDiv.innerHTML = (dadosCompeticao.log || []).map(l => `
+                <div class="history-item">
+                    <span>${l.n} (${l.r})</span>
+                    <button class="btn-undo" onclick="anular(${l.id})">X</button>
+                </div>
             `).join('');
         }
 
-        if(dadosCompeticao.faseGruposFinalizada) {
+        // Mata-Mata
+        if (dadosCompeticao.faseGruposFinalizada) {
             configurarMataMata(A, B, C);
         }
-    } catch (err) {
-        console.error("Erro na renderização. Tentando reparar banco...", err);
+    } catch (e) {
+        console.warn("Aguardando sincronização de dados...");
     }
 }
 
-// 6. Mata-Mata Protegido
 function configurarMataMata(A, B, C) {
-    const getNome = (lista, pos) => (lista && lista[pos] ? lista[pos].nome : "...");
-    const v = dadosCompeticao.vencedoresMataMata || {};
+    // Helper para evitar erro de ler nome de equipe inexistente
+    const safeName = (arr, i) => (arr && arr[i] ? arr[i].nome : "...");
+    const vencedores = dadosCompeticao.vencedoresMataMata || {};
 
-    const chaves = {
-        'q1_1': getNome(A, 0), 'q1_2': getNome(C, 1),
-        'q2_1': getNome(B, 0), 'q2_2': getNome(A, 2),
-        'q3_1': getNome(C, 0), 'q3_2': getNome(B, 2),
-        'q4_1': getNome(A, 1), 'q4_2': getNome(B, 1)
+    const dePara = {
+        'q1_1': safeName(A, 0), 'q1_2': safeName(C, 1),
+        'q2_1': safeName(B, 0), 'q2_2': safeName(A, 2),
+        'q3_1': safeName(C, 0), 'q3_2': safeName(B, 2),
+        'q4_1': safeName(A, 1), 'q4_2': safeName(B, 1)
     };
 
-    const ids = [...Object.keys(chaves), 's1_1', 's1_2', 's2_1', 's2_2', 'f1', 'f2'];
-    
-    ids.forEach(id => {
+    const todosIds = [...Object.keys(dePara), 's1_1', 's1_2', 's2_1', 's2_2', 'f1', 'f2'];
+
+    todosIds.forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
-            btn.innerText = v[id] || chaves[id] || "...";
-            v[id] ? btn.classList.add('venceu') : btn.classList.remove('venceu');
+            btn.innerText = vencedores[id] || dePara[id] || "...";
+            vencedores[id] ? btn.classList.add('venceu') : btn.classList.remove('venceu');
         }
     });
 
-    if (v['campeao']) {
+    if (vencedores['campeao']) {
         const p = document.getElementById('podio');
-        if(p) p.style.display = 'block';
+        if (p) p.style.display = 'block';
         const n = document.getElementById('campeao_nome');
-        if(n) n.innerText = v['campeao'];
-    }
-}
-
-function liberarMataMata() {
-    if (confirm("Gerar chaves do Mata-Mata?")) {
-        dadosCompeticao.faseGruposFinalizada = true;
-        if(!dadosCompeticao.vencedoresMataMata) dadosCompeticao.vencedoresMataMata = {};
-        salvarDados();
+        if (n) n.innerText = vencedores['campeao'];
     }
 }
 
 function vencer(fase, btn) {
     if (!dadosCompeticao.faseGruposFinalizada) return;
     const nome = btn.innerText;
-    if (nome === "...") return;
+    if (nome === "..." || nome === "") return;
 
-    if(!dadosCompeticao.vencedoresMataMata) dadosCompeticao.vencedoresMataMata = {};
+    if (!dadosCompeticao.vencedoresMataMata) dadosCompeticao.vencedoresMataMata = {};
     dadosCompeticao.vencedoresMataMata[btn.id] = nome;
 
+    // Fluxograma de avanço
     const prox = {
         'q1_1':'s1_1','q1_2':'s1_1','q4_1':'s1_2','q4_2':'s1_2',
         'q2_1':'s2_1','q2_2':'s2_1','q3_1':'s2_2','q3_2':'s2_2',
-        's1_1':'f1','s1_2':'f1','s2_1':'f2','s2_2':'f2',
-        'f1':'campeao','f2':'campeao'
+        's1_1':'f1', 's1_2':'f1', 's2_1':'f2', 's2_2':'f2',
+        'f1':'campeao', 'f2':'campeao'
     };
 
-    if(prox[btn.id]) dadosCompeticao.vencedoresMataMata[prox[btn.id]] = nome;
+    if (prox[btn.id]) {
+        dadosCompeticao.vencedoresMataMata[prox[btn.id]] = nome;
+    }
     salvarDados();
 }
 
+function liberarMataMata() {
+    if (confirm("Finalizar fase de grupos e gerar chaves?")) {
+        dadosCompeticao.faseGruposFinalizada = true;
+        salvarDados();
+    }
+}
+
 function confirmarReset() {
-    if (confirm("Resetar tudo?")) {
-        db.ref('campeonato_u14').remove().then(() => location.reload());
+    if (confirm("Deseja realmente apagar TODOS os dados do torneio?")) {
+        db.ref('campeonato_u14').remove().then(() => {
+            location.reload();
+        });
     }
 }
