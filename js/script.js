@@ -108,6 +108,11 @@ function render() {
 
 // 6. Mata-Mata
 function configurarMataMata(A, B, C) {
+    // Garante que o objeto exista para evitar o erro "undefined"
+    if (!dadosCompeticao.vencedoresMataMata) {
+        dadosCompeticao.vencedoresMataMata = {};
+    }
+
     // Chaves automáticas baseadas na tabela
     const chavesIniciais = {
         'q1_1': A[0] ? A[0].nome : "...",
@@ -120,16 +125,15 @@ function configurarMataMata(A, B, C) {
         'q4_2': B[1] ? B[1].nome : "..."
     };
 
-    // Preenche botões (prioriza o que foi clicado/salvo no banco)
     const todosIDs = [...Object.keys(chavesIniciais), 's1_1', 's1_2', 's2_1', 's2_2', 'f1', 'f2'];
     
     todosIDs.forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
-            // Se já existir um vencedor salvo, usa ele. Se for uma das quartas e estiver vazio, usa a chave automática.
-            btn.innerText = dadosCompeticao.vencedoresMataMata[id] || chavesIniciais[id] || btn.innerText;
+            // Se já existir um vencedor salvo no banco para esse ID, usa ele. 
+            // Senão, se for um ID de quartas (presente em chavesIniciais), usa o nome da chave.
+            btn.innerText = dadosCompeticao.vencedoresMataMata[id] || chavesIniciais[id] || "...";
             
-            // Estilo visual de quem já venceu
             if (dadosCompeticao.vencedoresMataMata[id]) {
                 btn.classList.add('venceu');
             } else {
@@ -138,18 +142,27 @@ function configurarMataMata(A, B, C) {
         }
     });
 
-    if (dadosCompeticao.vencedoresMataMata['campeao']) {
-        const podio = document.getElementById('podio');
-        const campNome = document.getElementById('campeao_nome');
-        if (podio) podio.style.display = 'block';
-        if (campNome) campNome.innerText = dadosCompeticao.vencedoresMataMata['campeao'];
+    // Pódio
+    const campNome = dadosCompeticao.vencedoresMataMata['campeao'];
+    const podioDiv = document.getElementById('podio');
+    if (campNome && podioDiv) {
+        podioDiv.style.display = 'block';
+        document.getElementById('campeao_nome').innerText = campNome;
     }
 }
 
 function liberarMataMata() {
     if (confirm("Finalizar grupos e gerar Quartas?")) {
+        // Inicializa o objeto de vencedores se ele não existir
+        if (!dadosCompeticao.vencedoresMataMata) {
+            dadosCompeticao.vencedoresMataMata = {};
+        }
+        
         dadosCompeticao.faseGruposFinalizada = true;
-        salvarDados();
+        
+        salvarDados(); 
+        // O salvarDados chama o Firebase, que por sua vez dispara o render() automaticamente
+        alert("Fase de grupos finalizada!");
     }
 }
 
