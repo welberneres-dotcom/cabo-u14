@@ -1,13 +1,13 @@
 // 1. Configuração do Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDkUlXPmG5_lNrBFmtX8Cbs05RzNmhnPME",
-  authDomain: "cabo-u14.firebaseapp.com",
-  databaseURL: "https://cabo-u14-default-rtdb.firebaseio.com",
-  projectId: "cabo-u14",
-  storageBucket: "cabo-u14.firebasestorage.app",
-  messagingSenderId: "16025736692",
-  appId: "1:16025736692:web:0de82d159a1a55100595a1",
-  measurementId: "G-GTE4BHFGHK"
+    apiKey: "AIzaSyDkUlXPmG5_lNrBFmtX8Cbs05RzNmhnPME",
+    authDomain: "cabo-u14.firebaseapp.com",
+    databaseURL: "https://cabo-u14-default-rtdb.firebaseio.com",
+    projectId: "cabo-u14",
+    storageBucket: "cabo-u14.firebasestorage.app",
+    messagingSenderId: "16025736692",
+    appId: "1:16025736692:web:0de82d159a1a55100595a1",
+    measurementId: "G-GTE4BHFGHK"
 };
 
 // Inicializa o Firebase
@@ -35,7 +35,13 @@ let dadosCompeticao = {
 db.ref('campeonato_u14').on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
-        dadosCompeticao = data;
+        // BLINDAGEM: Garante que mesmo que falte algo no banco, o código não quebre
+        dadosCompeticao = {
+            equipes: data.equipes || JSON.parse(JSON.stringify(equipesOriginal)),
+            log: data.log || [],
+            faseGruposFinalizada: data.faseGruposFinalizada || false,
+            vencedoresMataMata: data.vencedoresMataMata || {}
+        };
         render();
     } else {
         salvarDados();
@@ -87,7 +93,7 @@ function render() {
 
     if(!tbA || !tbB || !tbC) return;
 
-    const sort = (g) => dadosCompeticao.equipes.filter(x => x.grupo === g).sort((a,b) => b.pts - a.pts || b.v - a.v);
+    const sort = (g) => [...dadosCompeticao.equipes].filter(x => x.grupo === g).sort((a,b) => b.pts - a.pts || b.v - a.v);
     const A = sort("A"), B = sort("B"), C = sort("C");
 
     tbA.innerHTML = A.map((e,i) => `<tr><td>${i+1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`).join('');
@@ -108,10 +114,9 @@ function render() {
 
 // 6. Mata-Mata
 function configurarMataMata(A, B, C) {
-    // Garante que o objeto exista para evitar o erro "undefined"
-    if (!dadosCompeticao.vencedoresMataMata) {
-        dadosCompeticao.vencedoresMataMata = {};
-    }
+    // Garante que o objeto exista internamente
+    if (!dadosCompeticao.vencedoresMataMata) dadosCompeticao.vencedoresMataMata = {};
+    const v = dadosCompeticao.vencedoresMataMata;
 
     // Chaves automáticas baseadas na tabela
     const chavesIniciais = {
@@ -130,11 +135,10 @@ function configurarMataMata(A, B, C) {
     todosIDs.forEach(id => {
         const btn = document.getElementById(id);
         if (btn) {
-            // Se já existir um vencedor salvo no banco para esse ID, usa ele. 
-            // Senão, se for um ID de quartas (presente em chavesIniciais), usa o nome da chave.
-            btn.innerText = dadosCompeticao.vencedoresMataMata[id] || chavesIniciais[id] || "...";
+            // Ordem de prioridade: 1. Nome salvo no banco | 2. Nome calculado da tabela | 3. Pontinhos
+            btn.innerText = v[id] || chavesIniciais[id] || "...";
             
-            if (dadosCompeticao.vencedoresMataMata[id]) {
+            if (v[id]) {
                 btn.classList.add('venceu');
             } else {
                 btn.classList.remove('venceu');
@@ -143,7 +147,7 @@ function configurarMataMata(A, B, C) {
     });
 
     // Pódio
-    const campNome = dadosCompeticao.vencedoresMataMata['campeao'];
+    const campNome = v['campeao'];
     const podioDiv = document.getElementById('podio');
     if (campNome && podioDiv) {
         podioDiv.style.display = 'block';
@@ -153,15 +157,9 @@ function configurarMataMata(A, B, C) {
 
 function liberarMataMata() {
     if (confirm("Finalizar grupos e gerar Quartas?")) {
-        // Inicializa o objeto de vencedores se ele não existir
-        if (!dadosCompeticao.vencedoresMataMata) {
-            dadosCompeticao.vencedoresMataMata = {};
-        }
-        
+        if (!dadosCompeticao.vencedoresMataMata) dadosCompeticao.vencedoresMataMata = {};
         dadosCompeticao.faseGruposFinalizada = true;
-        
-        salvarDados(); 
-        // O salvarDados chama o Firebase, que por sua vez dispara o render() automaticamente
+        salvarDados();
         alert("Fase de grupos finalizada!");
     }
 }
@@ -173,18 +171,18 @@ function vencer(fase, btn) {
     if (nome === "..." || nome.includes("Venc.")) return;
 
     if (!dadosCompeticao.vencedoresMataMata) dadosCompeticao.vencedoresMataMata = {};
+    const v = dadosCompeticao.vencedoresMataMata;
     
-    // Salva o vencedor do botão clicado
-    dadosCompeticao.vencedoresMataMata[btn.id] = nome;
+    v[btn.id] = nome;
 
-    // Avança para a próxima fase
-    if (btn.id === 'q1_1' || btn.id === 'q1_2') dadosCompeticao.vencedoresMataMata['s1_1'] = nome;
-    if (btn.id === 'q4_1' || btn.id === 'q4_2') dadosCompeticao.vencedoresMataMata['s1_2'] = nome;
-    if (btn.id === 'q2_1' || btn.id === 'q2_2') dadosCompeticao.vencedoresMataMata['s2_1'] = nome;
-    if (btn.id === 'q3_1' || btn.id === 'q3_2') dadosCompeticao.vencedoresMataMata['s2_2'] = nome;
-    if (btn.id === 's1_1' || btn.id === 's1_2') dadosCompeticao.vencedoresMataMata['f1'] = nome;
-    if (btn.id === 's2_1' || btn.id === 's2_2') dadosCompeticao.vencedoresMataMata['f2'] = nome;
-    if (btn.id === 'f1' || btn.id === 'f2') dadosCompeticao.vencedoresMataMata['campeao'] = nome;
+    // Lógica de avanço
+    if (btn.id === 'q1_1' || btn.id === 'q1_2') v['s1_1'] = nome;
+    if (btn.id === 'q4_1' || btn.id === 'q4_2') v['s1_2'] = nome;
+    if (btn.id === 'q2_1' || btn.id === 'q2_2') v['s2_1'] = nome;
+    if (btn.id === 'q3_1' || btn.id === 'q3_2') v['s2_2'] = nome;
+    if (btn.id === 's1_1' || btn.id === 's1_2') v['f1'] = nome;
+    if (btn.id === 's2_1' || btn.id === 's2_2') v['f2'] = nome;
+    if (btn.id === 'f1' || btn.id === 'f2') v['campeao'] = nome;
 
     salvarDados();
 }
