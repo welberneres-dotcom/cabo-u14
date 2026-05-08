@@ -1,93 +1,210 @@
- body {
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-            background-color: #0b111e; 
-            background-image: url('../img/cabo_de_guerra.png'); 
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
-        }
-
-        .container {
-            max-width: 1250px;
-            margin: auto;
-            background: rgba(255, 255, 255, 0.95); 
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-        }
-
-        .header-container { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; gap: 15px; }
-        .header-container h1 { flex: 1; margin: 0; font-size: 1.4rem; text-align: center; color: #e53935; }
-        .header-logo { height: 60px; width: auto; object-fit: contain; }
-        
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 30px; }
-        .box { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 8px; }
-        
-        select, button, input { padding: 8px; border-radius: 4px; border: 1px solid #ccc; margin: 5px 0; width: 100%; box-sizing: border-box; }
-        button.btn-add { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
-        .btn-reset { background: #dc3545; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px;}
-        
-        .history-list { max-height: 120px; overflow-y: auto; font-size: 13px; border: 1px solid #ddd; padding: 5px; background: #fff; }
-        .history-item { display: flex; justify-content: space-between; padding: 4px; border-bottom: 1px solid #eee; align-items: center; }
-        .btn-undo { background: #dc3545; color: white; border: none; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 10px; width: auto; }
-
-        table { width: 100%; border-collapse: collapse; background: white; margin-bottom: 20px; }
-        th, td { border: 1px solid #dee2e6; padding: 6px; text-align: center; font-size: 13px; }
-        th { background: #e53935; color: white; }
-        
-        /* ESTILOS DO MATA-MATA DINÂMICO */
-        .fase-bracket { background: #fff; border: 2px solid #e53935; padding: 20px; border-radius: 10px; margin-top: 40px; }
-        .match-header { background: #333; color: white; padding: 5px; text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 10px; }
-        
-        .equipe-btn {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            margin: 4px 0;
-            background: #fff;
-            border: 2px solid #eee;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 13px;
-            transition: all 0.2s;
-            text-align: center;
-        }
-        .equipe-btn:hover { background: #fff9c4; border-color: #fbc02d; }
-        .venceu { background: #28a745 !important; color: white !important; border-color: #1e7e34 !important; }
-        
-        .vs-label { font-size: 10px; color: #999; display: block; text-align: center; margin: 2px 0; }
-        .match-container { margin-bottom: 20px; padding: 10px; border-bottom: 1px dashed #ddd; }
-
-        #podio { 
-            display: none; 
-            margin-top: 20px; 
-            text-align: center; 
-            background: #fff9c4; 
-            padding: 15px; 
-            border: 3px solid #ffd700; 
-            border-radius: 10px;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.02);} 100% {transform: scale(1);} }
-
-        .footer-logos { margin-top: 30px; padding-top: 20px; border-top: 2px solid #e2e8f0; }
-        .logo-grid { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 20px; margin-top: 15px; }
-        .logo-grid img { height: 45px; width: auto; }
-
-/* Se NÃO for a página admin, os botões do mata-mata perdem o efeito de clique */
-body:not([data-page="admin"]) .equipe-btn {
-    pointer-events: none; /* Desativa o clique */
-    cursor: default;
+/* 1. RESET E BASE */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 10px; /* Reduzido para celulares */
+    color: #333;
+    background-color: #0b111e; 
+    background-image: url('../img/cabo_de_guerra.png'); 
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
 }
 
+/* 2. CONTAINER RESPONSIVO */
+.container {
+    max-width: 1250px;
+    width: 95%; /* Garante margem nas laterais em telas pequenas */
+    margin: auto;
+    background: rgba(255, 255, 255, 0.96); 
+    padding: 20px; /* Reduzido de 30px */
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    box-sizing: border-box;
+}
+
+/* 3. HEADER (Logos e Título) */
+.header-container { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    margin-bottom: 20px; 
+    gap: 10px; 
+}
+
+.header-container h1 { 
+    flex: 1; 
+    margin: 0; 
+    font-size: 1.2rem; /* Menor para caber no celular */
+    text-align: center; 
+    color: #e53935; 
+    text-transform: uppercase;
+}
+
+.header-logo { 
+    height: 45px; /* Reduzido para mobile */
+    width: auto; 
+    object-fit: contain; 
+}
+
+/* 4. GRID RESPONSIVO (O segredo para não distorcer) */
+.grid-3 { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+    gap: 15px; 
+    margin-bottom: 30px; 
+}
+
+/* Ajuste para o bloco de lançar pontos ocupar mais espaço em telas grandes */
+@media (min-width: 900px) {
+    .grid-3 .box[style*="grid-column: span 2"] {
+        grid-column: span 2 !important;
+    }
+}
+
+.box { 
+    background: #f8f9fa; 
+    border: 1px solid #dee2e6; 
+    padding: 15px; 
+    border-radius: 8px; 
+}
+
+/* 5. ELEMENTOS DE FORMULÁRIO */
+select, button, input { 
+    padding: 10px; 
+    border-radius: 6px; 
+    border: 1px solid #ccc; 
+    margin: 5px 0; 
+    width: 100%; 
+    box-sizing: border-box; 
+    font-size: 16px; /* Evita zoom automático no iPhone */
+}
+
+button.btn-add { background: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; }
+.btn-reset { background: #dc3545; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 20px;}
+
+/* 6. HISTÓRICO COM BOTÃO X QUADRADO */
+.history-list { 
+    max-height: 200px; 
+    overflow-y: auto; 
+    font-size: 13px; 
+    border: 1px solid #ddd; 
+    padding: 5px; 
+    background: #fff; 
+}
+
+/* O botão X pequeno e quadrado como na imagem anterior */
+.btn-undo-mini { 
+    background: #dc3545; 
+    color: white; 
+    border: none; 
+    width: 24px; 
+    height: 24px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* 7. TABELAS RESPONSIVAS */
+table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    background: white; 
+    margin-bottom: 20px; 
+}
+
+th, td { 
+    border: 1px solid #dee2e6; 
+    padding: 8px; 
+    text-align: center; 
+    font-size: 13px; 
+}
+
+th { background: #e53935; color: white; }
+
+/* 8. MATA-MATA (BRACKET) */
+.fase-bracket { 
+    background: #fff; 
+    border: 2px solid #e53935; 
+    padding: 15px; 
+    border-radius: 10px; 
+    margin-top: 30px; 
+    overflow-x: auto; /* Permite rolar se o celular for muito pequeno */
+}
+
+.match-header { background: #333; color: white; padding: 6px; text-align: center; font-weight: bold; font-size: 12px; margin-bottom: 10px; border-radius: 4px; }
+
+.equipe-btn {
+    display: block;
+    width: 100%;
+    padding: 12px 5px;
+    margin: 4px 0;
+    background: #fff;
+    border: 2px solid #eee;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 13px;
+    transition: all 0.2s;
+    text-align: center;
+    white-space: nowrap; /* Evita que o nome do time quebre em duas linhas */
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.equipe-btn:hover { background: #fff9c4; border-color: #fbc02d; }
+
+/* Cor de vencedor */
 .venceu {
     background: #28a745 !important;
     color: white !important;
     border-color: #1e7e34 !important;
-    box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.4);
+}
+
+.vs-label { font-size: 10px; color: #999; display: block; text-align: center; margin: 2px 0; font-weight: bold; }
+.match-container { margin-bottom: 15px; padding: 5px; border-bottom: 1px dashed #ddd; }
+
+/* 9. PÓDIO */
+#podio { 
+    display: none; 
+    margin-top: 20px; 
+    text-align: center; 
+    background: #fff9c4; 
+    padding: 15px; 
+    border: 3px solid #ffd700; 
+    border-radius: 10px;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse { 0% {transform: scale(1);} 50% {transform: scale(1.02);} 100% {transform: scale(1);} }
+
+/* 10. MEDIA QUERIES PARA CELULAR */
+@media (max-width: 600px) {
+    body { padding: 5px; }
+    
+    .container { padding: 15px; width: 100%; border-radius: 0; }
+
+    .header-container { flex-direction: column; text-align: center; }
+    .header-logo { height: 40px; }
+    
+    .header-container h1 { font-size: 1rem; order: -1; } /* Título em cima das logos no mobile */
+
+    /* Empilhar o Mata-Mata verticalmente no celular */
+    .fase-bracket .grid-3 {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .match-container { margin-top: 10px !important; }
+}
+
+/* Segurança para clique */
+body:not([data-page="admin"]) .equipe-btn {
+    pointer-events: none;
+    cursor: default;
 }
