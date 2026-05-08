@@ -1,25 +1,18 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Configuração do seu Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyDkUlXPmG5_lNrBFmtX8Cbs05RzNmhnPME",
-  authDomain: "cabo-u14.firebaseapp.com",
-  databaseURL: "https://cabo-u14-default-rtdb.firebaseio.com",
-  projectId: "cabo-u14",
-  storageBucket: "cabo-u14.firebasestorage.app",
-  messagingSenderId: "16025736692",
-  appId: "1:16025736692:web:0de82d159a1a55100595a1",
-  measurementId: "G-GTE4BHFGHK"
+    apiKey: "AIzaSyDkUlXPmG5_lNrBFmtX8Cbs05RzNmhnPME",
+    authDomain: "cabo-u14.firebaseapp.com",
+    databaseURL: "https://cabo-u14-default-rtdb.firebaseio.com",
+    projectId: "cabo-u14",
+    storageBucket: "cabo-u14.firebasestorage.app",
+    messagingSenderId: "16025736692",
+    appId: "1:16025736692:web:0de82d159a1a55100595a1",
+    measurementId: "G-GTE4BHFGHK"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+// Inicializa o Firebase (Sintaxe Compat)
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
 const equipesOriginal = [
     { nome: "CAVBOTS", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "MARTEC", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "CAVENGERS", grupo: "A", pts: 0, v: 0, e: 0, d: 0 },
@@ -34,18 +27,16 @@ let dadosCompeticao = {
     equipes: JSON.parse(JSON.stringify(equipesOriginal)),
     log: [],
     faseGruposFinalizada: false,
-    vencedoresMataMata: {} // Armazena quem clicamos no bracket
+    vencedoresMataMata: {}
 };
 
 // --- ESCUTAR MUDANÇAS NA NUVEM ---
-// Sempre que alguém (juiz) mudar algo, todos os navegadores rodam o render() automaticamente
 db.ref('campeonato_u14').on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
         dadosCompeticao = data;
         render();
     } else {
-        // Se for a primeira vez, salva o estado inicial
         salvarDados();
     }
 });
@@ -59,7 +50,6 @@ function registrar() {
     const r = document.getElementById('selectResultado').value;
     const id = Date.now();
     
-    // Altera no objeto local e envia para nuvem
     alterarPontos(n, r, 1);
     if(!dadosCompeticao.log) dadosCompeticao.log = [];
     dadosCompeticao.log.unshift({id, n, r});
@@ -78,9 +68,11 @@ function anular(id) {
 
 function alterarPontos(n, r, f) {
     const e = dadosCompeticao.equipes.find(x => x.nome === n);
-    if(r === 'V') { e.pts += (3*f); e.v += (1*f); }
-    else if(r === 'E') { e.pts += (1*f); e.e += (1*f); }
-    else { e.d += (1*f); }
+    if(e) {
+        if(r === 'V') { e.pts += (3*f); e.v += (1*f); }
+        else if(r === 'E') { e.pts += (1*f); e.e += (1*f); }
+        else { e.d += (1*f); }
+    }
 }
 
 function render() {
@@ -101,7 +93,6 @@ function render() {
 }
 
 function configurarMataMata(A, B, C) {
-    // Definindo os nomes das quartas baseados na classificação
     const seeds = {
         'q1_1': A[0].nome, 'q1_2': C[1].nome,
         'q2_1': B[0].nome, 'q2_2': A[2].nome,
@@ -111,10 +102,11 @@ function configurarMataMata(A, B, C) {
 
     for(let id in seeds) {
         const btn = document.getElementById(id);
-        if(!dadosCompeticao.vencedoresMataMata[id]) btn.innerText = seeds[id];
+        if(btn && !dadosCompeticao.vencedoresMataMata[id]) {
+            btn.innerText = seeds[id];
+        }
     }
 
-    // Carregar vencedores já selecionados da nuvem
     for(let id in dadosCompeticao.vencedoresMataMata) {
         const btn = document.getElementById(id);
         if(btn) {
@@ -139,7 +131,6 @@ function vencer(fase, btn) {
 
     if(!dadosCompeticao.vencedoresMataMata) dadosCompeticao.vencedoresMataMata = {};
     
-    // Lógica de avanço (IDs correspondentes ao seu HTML)
     if(fase === 'q1') document.getElementById('s1_1').innerText = nome;
     if(fase === 'q4') document.getElementById('s1_2').innerText = nome;
     if(fase === 'q2') document.getElementById('s2_1').innerText = nome;
@@ -152,7 +143,6 @@ function vencer(fase, btn) {
         document.getElementById('campeao_nome').innerText = nome;
     }
 
-    // Salva o estado atual do bracket
     document.querySelectorAll('.equipe-btn').forEach(b => {
         if(b.innerText !== "..." && !b.innerText.includes("Venc.")) {
             dadosCompeticao.vencedoresMataMata[b.id] = b.innerText;
