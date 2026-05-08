@@ -1,4 +1,3 @@
-// 1. CONFIGURAÇÃO FIREBASE (Igual ao seu)
 const firebaseConfig = {
     apiKey: "AIzaSyDkUlXPmG5_lNrBFmtX8Cbs05RzNmhnPME",
     authDomain: "cabo-u14.firebaseapp.com",
@@ -22,21 +21,12 @@ const equipesOriginal = [
     { nome: "STARTEC", grupo: "C", pts: 0, v: 0, e: 0, d: 0 }, { nome: "CAV NEO JAZZ", grupo: "C", pts: 0, v: 0, e: 0, d: 0 }
 ];
 
-let dados = { 
-    equipes: JSON.parse(JSON.stringify(equipesOriginal)), 
-    log: [], 
-    faseGruposFinalizada: false, 
-    vencedoresMataMata: {} 
-};
+let dados = { equipes: JSON.parse(JSON.stringify(equipesOriginal)), log: [], faseGruposFinalizada: false, vencedoresMataMata: {} };
 
 db.ref('campeonato_u14').on('value', (snap) => {
     const d = snap.val();
-    if (d && d.equipes) {
-        dados = d;
-        render();
-    } else {
-        db.ref('campeonato_u14').set(dados);
-    }
+    if (d && d.equipes) { dados = d; render(); }
+    else { db.ref('campeonato_u14').set(dados); }
 });
 
 function registrar() {
@@ -54,58 +44,42 @@ function registrar() {
 }
 
 function excluirResultado(id) {
-    if (!confirm("Deseja excluir este resultado e estornar os pontos?")) return;
-    const indexLog = dados.log.findIndex(l => l.id === id);
-    if (indexLog === -1) return;
-    const itemExcluir = dados.log[indexLog];
-    const equipe = dados.equipes.find(e => e.nome === itemExcluir.n);
+    if (!confirm("Deseja estornar os pontos?")) return;
+    const idx = dados.log.findIndex(l => l.id === id);
+    if (idx === -1) return;
+    const item = dados.log[idx];
+    const equipe = dados.equipes.find(e => e.nome === item.n);
     if (equipe) {
-        if (itemExcluir.r === 'V') { equipe.pts -= 3; equipe.v -= 1; }
-        else if (itemExcluir.r === 'E') { equipe.pts -= 1; equipe.e -= 1; }
-        else if (itemExcluir.r === 'D') { equipe.d -= 1; }
-        dados.log.splice(indexLog, 1);
+        if (item.r === 'V') { equipe.pts -= 3; equipe.v -= 1; }
+        else if (item.r === 'E') { equipe.pts -= 1; equipe.e -= 1; }
+        else { equipe.d -= 1; }
+        dados.log.splice(idx, 1);
         db.ref('campeonato_u14').set(dados);
     }
 }
 
-// CORREÇÃO PARA O GITHUB:
 function vencer(partida, el) {
-    // Detecta se é a página admin de forma mais segura
     const path = window.location.pathname.toLowerCase();
-    const isAdmin = path.includes('admin') || path === '/' || path.includes('index.html'); // Ajuste conforme necessário
-
-    if (!isAdmin) return;
-
-    const nomeVencedor = el.innerText;
-    if (!nomeVencedor || nomeVencedor === "..." || nomeVencedor === "Aguardando..." || nomeVencedor.includes("Finalista")) return;
-
+    if (!path.includes('admin')) return;
+    const nome = el.innerText;
+    if (!nome || nome === "..." || nome === "Aguardando..." || nome.includes("Finalista")) return;
     if (!dados.vencedoresMataMata) dados.vencedoresMataMata = {};
-    
-    const chaves = {
-        'q1': 's1_1', 'q4': 's1_2',
-        'q2': 's2_1', 'q3': 's2_2',
-        's1': 'f1',   's2': 'f2',
-        'f': 'campeao'
-    };
-
+    const chaves = { 'q1':'s1_1', 'q4':'s1_2', 'q2':'s2_1', 'q3':'s2_2', 's1':'f1', 's2':'f2', 'f':'campeao' };
     if (chaves[partida]) {
-        dados.vencedoresMataMata[chaves[partida]] = nomeVencedor;
+        dados.vencedoresMataMata[chaves[partida]] = nome;
         dados.vencedoresMataMata[el.id + "_win"] = true;
-        
         const num = el.id.split('_')[1];
         const outroNum = (num === '1') ? '2' : '1';
-        let adversarioId = (partida === 'f') ? (el.id === 'f1' ? 'f2' : 'f1') : el.id.split('_')[0] + "_" + outroNum;
-        
-        dados.vencedoresMataMata[adversarioId + "_win"] = false;
+        let advId = (partida === 'f') ? (el.id === 'f1' ? 'f2' : 'f1') : el.id.split('_')[0] + "_" + outroNum;
+        dados.vencedoresMataMata[advId + "_win"] = false;
         db.ref('campeonato_u14').set(dados);
     }
 }
 
 function liberarMataMata() {
-    if (confirm("Finalizar grupos e gerar Quartas?")) {
-        const obter = (g) => [...dados.equipes].filter(e => e.grupo === g).sort((a, b) => b.pts - a.pts || b.v - a.v);
+    if (confirm("Gerar Quartas?")) {
+        const obter = (g) => [...dados.equipes].filter(e => e.grupo === g).sort((a,b) => b.pts - a.pts || b.v - a.v);
         const rA = obter("A"), rB = obter("B"), rC = obter("C");
-
         dados.vencedoresMataMata = {
             'q1_1': rA[0]?.nome || "...", 'q1_2': rC[1]?.nome || "...",
             'q2_1': rB[0]?.nome || "...", 'q2_2': rA[2]?.nome || "...",
@@ -120,66 +94,38 @@ function liberarMataMata() {
 function render() {
     try {
         const trs = (g) => [...dados.equipes].filter(x => x.grupo === g)
-            .sort((a, b) => b.pts - a.pts || b.v - a.v)
-            .map((e, i) => `<tr><td>${i + 1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`).join('');
-
-        ["A", "B", "C"].forEach(g => {
-            const t = document.querySelector(`#tabela${g} tbody`);
-            if (t) t.innerHTML = trs(g);
-        });
-
+            .sort((a,b) => b.pts - a.pts || b.v - a.v)
+            .map((e,i) => `<tr><td>${i+1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td><td>${e.e||0}</td><td>${e.d||0}</td></tr>`).join('');
+        ["A","B","C"].forEach(g => { const t = document.querySelector(`#tabela${g} tbody`); if(t) t.innerHTML = trs(g); });
         const hist = document.getElementById('historico');
         if (hist) {
             hist.innerHTML = (dados.log || []).map(l => `
                 <div class="history-item" style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:5px 10px; margin-bottom:5px; border-radius:4px; border-left:4px solid #007bff; font-size: 14px;">
-                    <div style="display: flex; flex-direction: column;">
-                        <strong>${l.n}</strong>
-                        <span style="font-size: 12px; color: #666;">${l.r === 'V' ? 'Vitória' : l.r === 'E' ? 'Empate' : 'Derrota'}</span>
-                    </div>
-                    <button onclick="excluirResultado(${l.id})" style="background:#dc3545; color:white; border:none; border-radius:4px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; cursor:pointer; font-size: 12px;">X</button>
-                </div>
-            `).join('');
+                    <div style="display: flex; flex-direction: column;"><strong>${l.n}</strong><span style="font-size: 12px; color: #666;">${l.r==='V'?'Vitória':l.r==='E'?'Empate':'Derrota'}</span></div>
+                    <button onclick="excluirResultado(${l.id})" class="btn-undo-mini">X</button>
+                </div>`).join('');
         }
-
         const v = dados.vencedoresMataMata || {};
-        const ids = ['q1_1', 'q1_2', 'q2_1', 'q2_2', 'q3_1', 'q3_2', 'q4_1', 'q4_2', 's1_1', 's1_2', 's2_1', 's2_2', 'f1', 'f2'];
-        
+        const ids = ['q1_1','q1_2','q2_1','q2_2','q3_1','q3_2','q4_1','q4_2','s1_1','s1_2','s2_1','s2_2','f1','f2'];
         ids.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
                 if (!v[id]) {
-                    if(id.startsWith('q')) el.innerText = "...";
-                    else if(id.startsWith('s')) el.innerText = "Aguardando...";
-                    else el.innerText = "Finalista";
+                    if(id.startsWith('q')) el.innerText = "..."; else if(id.startsWith('s')) el.innerText = "Aguardando..."; else el.innerText = "Finalista";
                     el.classList.remove('venceu');
                 } else {
                     el.innerText = v[id];
-                    if (v[id + "_win"]) el.classList.add('venceu');
-                    else el.classList.remove('venceu');
+                    if (v[id+"_win"]) el.classList.add('venceu'); else el.classList.remove('venceu');
                 }
             }
         });
-
         const podio = document.getElementById('podio');
-        const camNome = document.getElementById('campeao_nome');
-        if (podio && camNome) {
-            if (v.campeao) {
-                podio.style.display = 'block';
-                camNome.innerText = v.campeao;
-            } else {
-                podio.style.display = 'none';
-            }
-        }
-    } catch (err) { console.log("Renderizando..."); }
+        if (podio) { podio.style.display = v.campeao ? 'block' : 'none'; document.getElementById('campeao_nome').innerText = v.campeao || "---"; }
+    } catch(err) { console.log("Renderizando..."); }
 }
 
 window.confirmarReset = function() {
-    if (confirm("ATENÇÃO: Deseja ZERAR toda a competição?")) {
-        db.ref('campeonato_u14').set({ 
-            equipes: JSON.parse(JSON.stringify(equipesOriginal)), 
-            log: [], 
-            faseGruposFinalizada: false, 
-            vencedoresMataMata: {} 
-        }).then(() => location.reload());
+    if (confirm("ZERAR TUDO?")) {
+        db.ref('campeonato_u14').set({ equipes: JSON.parse(JSON.stringify(equipesOriginal)), log: [], faseGruposFinalizada: false, vencedoresMataMata: {} }).then(() => location.reload());
     }
 }
