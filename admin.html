@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CABO DE GUERRA - U14</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="shortcut icon" href="img/LOGO.ico">
+
+</head>
+<body>
+
+<div class="container">
+    <div class="header-container">
+        <img src="img/fira_logo.png" alt="Fira Brasil" class="header-logo">
+        <h1>COMPETIÇÃO DO CABO DE GUERRA - CATEGORIA U14</h1>
+        <img src="img/robotec_logo.png" alt="Robotec" class="header-logo">
+    </div>
+
+    <div class="grid-3">
+        <div class="box" style="grid-column: span 2;">
+            <h3>Lançar Ponto (Fase de Grupos)</h3>
+            <select id="selectEquipe">
+                <optgroup label="Grupo A">
+                    <option>CAVBOTS</option><option>MARTEC</option><option>CAVENGERS</option>
+                    <option>FIPETEC</option><option>TECHDROID</option><option>ROBOVERSE</option>
+                </optgroup>
+                <optgroup label="Grupo B">
+                    <option>CAVSCRIPT</option><option>ROBOTEC-VIVER</option><option>MAVELTEC U-14</option>
+                    <option>INNOVATION</option><option>CAVZORD</option><option>NOVA TECH</option>
+                </optgroup>
+                <optgroup label="Grupo C">
+                    <option>ASTROCAV</option><option>FORTEC</option><option>NOVA BLITZ</option>
+                    <option>STARTEC</option><option>CAV NEO JAZZ</option>
+                </optgroup>
+            </select>
+            <select id="selectResultado">
+                <option value="V">Vitória (+3)</option>
+                <option value="E">Empate (+1)</option>
+                <option value="D">Derrota (0)</option>
+            </select>
+            <button class="btn-add" onclick="registrar()">Registrar Resultado</button>
+        </div>
+        <div class="box">
+            <h3>Histórico / Correção</h3>
+            <div id="historico" class="history-list"></div>
+        </div>
+    </div>
+
+    <div class="grid-3">
+        <div>
+            <h3>Grupo A</h3>
+            <table id="tabelaA"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div>
+            <h3>Grupo B</h3>
+            <table id="tabelaB"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th></tr></thead><tbody></tbody></table>
+        </div>
+        <div>
+            <h3>Grupo C</h3>
+            <table id="tabelaC"><thead><tr><th>Pos</th><th>Equipe</th><th>P</th><th>V</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+
+    <button id="btnFinalizar" onclick="liberarMataMata()" style="background: #e53935; color: white; font-weight: bold; margin-bottom: 20px; cursor: pointer; border: none; border-radius: 5px;">
+        FINALIZAR GRUPOS E GERAR QUARTAS (3A + 3B + 2C)
+    </button>
+
+    <div class="fase-bracket">
+        <h2>Mata-Mata U14 (Clique no Vencedor)</h2>
+        <div class="grid-3">
+            <div>
+                <div class="match-header">QUARTAS DE FINAL</div>
+                <div class="match-container">
+                    <button class="equipe-btn" onclick="vencer('q1', this)" id="q1_1">...</button>
+                    <span class="vs-label">VS</span>
+                    <button class="equipe-btn" onclick="vencer('q1', this)" id="q1_2">...</button>
+                </div>
+                <div class="match-container">
+                    <button class="equipe-btn" onclick="vencer('q2', this)" id="q2_1">...</button>
+                    <span class="vs-label">VS</span>
+                    <button class="equipe-btn" onclick="vencer('q2', this)" id="q2_2">...</button>
+                </div>
+                <div class="match-container">
+                    <button class="equipe-btn" onclick="vencer('q3', this)" id="q3_1">...</button>
+                    <span class="vs-label">VS</span>
+                    <button class="equipe-btn" onclick="vencer('q3', this)" id="q3_2">...</button>
+                </div>
+                <div class="match-container">
+                    <button class="equipe-btn" onclick="vencer('q4', this)" id="q4_1">...</button>
+                    <span class="vs-label">VS</span>
+                    <button class="equipe-btn" onclick="vencer('q4', this)" id="q4_2">...</button>
+                </div>
+            </div>
+
+            <div>
+                <div class="match-header">SEMI-FINAL</div>
+                <div class="match-container" style="margin-top: 40px;">
+                    <button class="equipe-btn" onclick="vencer('s1', this)" id="s1_1">Venc. J1</button>
+                    <span class="vs-label">VS</span>
+                    <button class="equipe-btn" onclick="vencer('s1', this)" id="s1_2">Venc. J4</button>
+                </div>
+                <div class="match-container" style="margin-top: 80px;">
+                    <button class="equipe-btn" onclick="vencer('s2', this)" id="s2_1">Venc. J2</button>
+                    <span class="vs-label">VS</span>
+                    <button class="equipe-btn" onclick="vencer('s2', this)" id="s2_2">Venc. J3</button>
+                </div>
+            </div>
+
+            <div>
+                <div class="match-header" style="background:#ffd700; color:#000">GRANDE FINAL</div>
+                <div class="match-container" style="margin-top: 100px;">
+                    <button class="equipe-btn" onclick="vencer('f', this)" id="f1">Finalista 1</button>
+                    <span class="vs-label">VS</span>
+                    <button class="equipe-btn" onclick="vencer('f', this)" id="f2">Finalista 2</button>
+                </div>
+
+                <div id="podio">
+                    <span style="font-size: 20px;">🏆</span>
+                    <h3 style="margin: 5px 0; color: #b8860b;">CAMPEÃO U14</h3>
+                    <div id="campeao_nome" style="font-weight: bold; font-size: 18px;">---</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-reset" onclick="confirmarReset()">ZERAR TODO O PLACAR U14</button>
+
+    <div class="footer-logos">
+        <span style="text-align: center; display: block; font-weight: bold;">Realização e Apoio</span>
+        <div class="logo-grid">
+            <img src="img/robotec_logo.png" alt="Robotec">
+            <img src="img/fira_logo.png" alt="Fira Brasil">
+            <img src="img/coc_logo.png" alt="COC">
+            <img src="img/robocity_logo.png" alt="Robo City">
+        </div>
+    </div>
+</div>
+<!-- SDKs do Firebase (Versão compatível com navegador) -->
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <!-- O SEU SCRIPT (deve vir DEPOIS do firebase) -->
+    <script src="js/script.js"></script>
+</body>
+</body>
+</html>
