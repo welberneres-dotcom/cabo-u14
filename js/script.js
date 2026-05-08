@@ -81,6 +81,54 @@ function render() {
     } catch(err) { console.error("Erro ao desenhar tela:", err); }
 }
 
+function liberarMataMata() {
+    if (!dados.equipes || dados.equipes.length === 0) {
+        alert("Erro: Dados das equipes não carregados.");
+        return;
+    }
+
+    if (confirm("Finalizar grupos e gerar Quartas de Final automaticamente?")) {
+        // 1. Pegar os classificados de cada grupo ordenados por pontos
+        const obterMelhores = (grupo) => {
+            return [...dados.equipes]
+                .filter(e => e.grupo === grupo)
+                .sort((a, b) => b.pts - a.pts || b.v - a.v);
+        };
+
+        const rankingA = obterMelhores("A");
+        const rankingB = obterMelhores("B");
+        const rankingC = obterMelhores("C");
+
+        // 2. Definir as chaves iniciais (Exemplo: 1ºA vs 2ºC, etc)
+        // Ajuste as posições conforme o regulamento do seu torneio
+        dados.vencedoresMataMata = {
+            'q1_1': rankingA[0] ? rankingA[0].nome : "1º Grupo A",
+            'q1_2': rankingC[1] ? rankingC[1].nome : "2º Grupo C",
+            
+            'q2_1': rankingB[0] ? rankingB[0].nome : "1º Grupo B",
+            'q2_2': rankingA[2] ? rankingA[2].nome : "3º Grupo A",
+            
+            'q3_1': rankingC[0] ? rankingC[0].nome : "1º Grupo C",
+            'q3_2': rankingB[2] ? rankingB[2].nome : "3º Grupo B",
+            
+            'q4_1': rankingA[1] ? rankingA[1].nome : "2º Grupo A",
+            'q4_2': rankingB[1] ? rankingB[1].nome : "2º Grupo B"
+        };
+
+        // 3. Ativar a fase de mata-mata
+        dados.faseGruposFinalizada = true;
+
+        // 4. Salvar no Firebase
+        db.ref('campeonato_u14').set(dados)
+            .then(() => {
+                alert("Mata-Mata gerado com sucesso!");
+            })
+            .catch((error) => {
+                alert("Erro ao salvar: " + error.message);
+            });
+    }
+}
+
 // FUNÇÃO DE RESET QUE FUNCIONA MESMO COM ERRO
 window.confirmarReset = function() {
     if(confirm("Deseja ZERAR tudo agora?")) {
