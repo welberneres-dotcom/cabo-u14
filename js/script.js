@@ -1,18 +1,21 @@
-// Configuração do seu Firebase
+// APAGUE OS "IMPORT" QUE ESTAVAM AQUI EM CIMA. COMECE DIRETO POR AQUI:
+
 const firebaseConfig = {
-    apiKey: "AIzaSyDkUlXPmG5_lNrBFmtX8Cbs05RzNmhnPME",
-    authDomain: "cabo-u14.firebaseapp.com",
-    databaseURL: "https://cabo-u14-default-rtdb.firebaseio.com",
-    projectId: "cabo-u14",
-    storageBucket: "cabo-u14.firebasestorage.app",
-    messagingSenderId: "16025736692",
-    appId: "1:16025736692:web:0de82d159a1a55100595a1",
-    measurementId: "G-GTE4BHFGHK"
+  apiKey: "AIzaSyDkUlXPmG5_lNrBFmtX8Cbs05RzNmhnPME",
+  authDomain: "cabo-u14.firebaseapp.com",
+  databaseURL: "https://cabo-u14-default-rtdb.firebaseio.com",
+  projectId: "cabo-u14",
+  storageBucket: "cabo-u14.firebasestorage.app",
+  messagingSenderId: "16025736692",
+  appId: "1:16025736692:web:0de82d159a1a55100595a1",
+  measurementId: "G-GTE4BHFGHK"
 };
 
-// Inicializa o Firebase
+// Inicializa o Firebase usando a sintaxe Compat
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+
+// ... o restante do código que te mandei antes (equipesOriginal, dadosCompeticao, etc)
 
 const equipesOriginal = [
     { nome: "CAVBOTS", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "MARTEC", grupo: "A", pts: 0, v: 0, e: 0, d: 0 }, { nome: "CAVENGERS", grupo: "A", pts: 0, v: 0, e: 0, d: 0 },
