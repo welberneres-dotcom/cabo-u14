@@ -1,4 +1,3 @@
-// Configuração
 const firebaseConfig = {
     apiKey: "AIzaSyDkUlXPmG5_lNrBFmtX8Cbs05RzNmhnPME",
     authDomain: "cabo-u14.firebaseapp.com",
@@ -22,92 +21,70 @@ const equipesOriginal = [
     { nome: "STARTEC", grupo: "C", pts: 0, v: 0, e: 0, d: 0 }, { nome: "CAV NEO JAZZ", grupo: "C", pts: 0, v: 0, e: 0, d: 0 }
 ];
 
-let dadosCompeticao = null;
+let dados = { equipes: JSON.parse(JSON.stringify(equipesOriginal)), log: [], faseGruposFinalizada: false, vencedoresMataMata: {} };
 
-// Escuta o banco de dados
-db.ref('campeonato_u14').on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data && data.equipes) {
-        dadosCompeticao = data;
+// Sincronização robusta
+db.ref('campeonato_u14').on('value', (snap) => {
+    const d = snap.val();
+    if (d && d.equipes) {
+        dados = {
+            equipes: d.equipes,
+            log: d.log || [],
+            faseGruposFinalizada: d.faseGruposFinalizada || false,
+            vencedoresMataMata: d.vencedoresMataMata || {}
+        };
         render();
     } else {
-        // Se o banco estiver vazio ou corrompido, inicializa com o padrão
-        resetarBancoAForca();
+        // Se o banco estiver vazio ou estranho, força a estrutura inicial
+        db.ref('campeonato_u14').set(dados);
     }
-}, (erro) => {
-    console.error("Erro no Firebase:", erro);
 });
 
-function resetarBancoAForca() {
-    const inicial = {
-        equipes: JSON.parse(JSON.stringify(equipesOriginal)),
-        log: [],
-        faseGruposFinalizada: false,
-        vencedoresMataMata: {}
-    };
-    db.ref('campeonato_u14').set(inicial).then(() => {
-        window.location.reload();
-    });
-}
-
-// ATENÇÃO: Esta função agora é global para você chamar no console se o botão falhar
-window.confirmarReset = function() {
-    if (confirm("Isso vai apagar TUDO. Confirmar?")) {
-        resetarBancoAForca();
-    }
-};
-
 function registrar() {
-    if (!dadosCompeticao) return;
     const n = document.getElementById('selectEquipe').value;
     const r = document.getElementById('selectResultado').value;
-    const e = dadosCompeticao.equipes.find(x => x.nome === n);
+    const e = dados.equipes.find(x => x.nome === n);
     if(e) {
         if(r === 'V') { e.pts += 3; e.v += 1; }
         else if(r === 'E') { e.pts += 1; e.e += 1; }
         else { e.d += 1; }
-        if(!dadosCompeticao.log) dadosCompeticao.log = [];
-        dadosCompeticao.log.unshift({id: Date.now(), n, r});
-        db.ref('campeonato_u14').set(dadosCompeticao);
+        dados.log.unshift({id: Date.now(), n, r});
+        db.ref('campeonato_u14').set(dados);
     }
 }
 
 function render() {
     try {
-        const bodyA = document.querySelector("#tabelaA tbody");
-        if(!bodyA || !dadosCompeticao) return;
+        const trs = (g) => [...dados.equipes].filter(x => x.grupo === g)
+            .sort((a,b) => b.pts - a.pts || b.v - a.v)
+            .map((e,i) => `<tr><td>${i+1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`).join('');
 
-        const sort = (g) => [...dadosCompeticao.equipes].filter(x => x.grupo === g).sort((a,b) => b.pts - a.pts || b.v - a.v);
-        const A = sort("A"), B = sort("B"), C = sort("C");
-
-        const trs = (lista) => lista.map((e,i) => `<tr><td>${i+1}º</td><td>${e.nome}</td><td>${e.pts}</td><td>${e.v}</td></tr>`).join('');
-        
-        bodyA.innerHTML = trs(A);
-        document.querySelector("#tabelaB tbody").innerHTML = trs(B);
-        document.querySelector("#tabelaC tbody").innerHTML = trs(C);
-
-        const hist = document.getElementById('historico');
-        if(hist) {
-            hist.innerHTML = (dadosCompeticao.log || []).map(l => `
-                <div class="history-item"><span>${l.n} (${l.r})</span><button onclick="anular(${l.id})">X</button></div>
-            `).join('');
+        const tA = document.querySelector("#tabelaA tbody");
+        if(tA) {
+            tA.innerHTML = trs("A");
+            document.querySelector("#tabelaB tbody").innerHTML = trs("B");
+            document.querySelector("#tabelaC tbody").innerHTML = trs("C");
         }
 
-        if(dadosCompeticao.faseGruposFinalizada) configurarMataMata(A, B, C);
-    } catch(err) {
-        console.warn("Erro ao renderizar, dados incompletos.");
-    }
+        const hist = document.getElementById('historico');
+        if(hist) hist.innerHTML = dados.log.map(l => `<div class="history-item">${l.n} (${l.r}) <button onclick="anular(${l.id})">X</button></div>`).join('');
+
+        if(dados.faseGruposFinalizada) {
+            const v = dados.vencedoresMataMata;
+            // IDs do HTML para o mata-mata (ajuste se os seus forem diferentes)
+            const ids = ['q1_1','q1_2','q2_1','q2_2','q3_1','q3_2','q4_1','q4_2','s1_1','s1_2','s2_1','s2_2','f1','f2'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.innerText = v[id] || "...";
+            });
+        }
+    } catch(err) { console.error("Erro ao desenhar tela:", err); }
 }
 
-function configurarMataMata(A, B, C) {
-    const get = (l, p) => (l && l[p] ? l[p].nome : "...");
-    const v = dadosCompeticao.vencedoresMataMata || {};
-    const base = {
-        'q1_1': get(A,0), 'q1_2': get(C,1), 'q2_1': get(B,0), 'q2_2': get(A,2),
-        'q3_1': get(C,0), 'q3_2': get(B,2), 'q4_1': get(A,1), 'q4_2': get(B,1)
-    };
-    Object.keys(base).forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.innerText = v[id] || base[id];
-    });
+// FUNÇÃO DE RESET QUE FUNCIONA MESMO COM ERRO
+window.confirmarReset = function() {
+    if(confirm("Deseja ZERAR tudo agora?")) {
+        const limpo = { equipes: equipesOriginal, log: [], faseGruposFinalizada: false, vencedoresMataMata: {} };
+        db.ref('campeonato_u14').set(limpo).then(() => location.reload());
+    }
 }
