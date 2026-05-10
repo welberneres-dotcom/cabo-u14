@@ -73,3 +73,36 @@ td:nth-child(2) { width: 40%; text-align: left; padding-left: 5px; } /* Coluna d
 }
 
 body:not([data-page="admin"]) .equipe-btn { pointer-events: none; cursor: default; }
+
+/*Formatação do rodapé*/
+        .footer-logos {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e2e8f0;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .logo-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .logo-grid img {
+            height: 50px; /* Ajuste a altura conforme necessário */
+            width: auto;
+            filter: grayscale(20%); /* Deixa as cores levemente suaves */
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.3s ease;
+        }
+
+        .logo-grid img:hover {
+            transform: scale(1.1); /* Efeito de aumento ao passar o mouse */
+            filter: grayscale(0%);
+        }
+
