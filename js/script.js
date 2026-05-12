@@ -129,3 +129,28 @@ window.confirmarReset = function() {
         db.ref('campeonato_u14').set({ equipes: JSON.parse(JSON.stringify(equipesOriginal)), log: [], faseGruposFinalizada: false, vencedoresMataMata: {} }).then(() => location.reload());
     }
 }
+
+window.verificarLogin = function() {
+    const usuarioCorreto = "admin"; // Escolha o usuário aqui
+    const senhaCorreta = "fira1910";  // Escolha a senha aqui
+
+    const u = document.getElementById('user').value;
+    const p = document.getElementById('pass').value;
+
+    if (u === usuarioCorreto && p === senhaCorreta) {
+        // Esconde a tela de login e libera a página
+        document.getElementById('loginGate').style.display = 'none';
+        // Opcional: Salva no navegador que já logou para não pedir de novo nesta sessão
+        sessionStorage.setItem('logado', 'true');
+    } else {
+        document.getElementById('erroLogin').style.display = 'block';
+    }
+};
+
+// Verificar se já logou anteriormente nesta sessão ao carregar a página
+window.addEventListener('load', () => {
+    if (sessionStorage.getItem('logado') === 'true') {
+        const gate = document.getElementById('loginGate');
+        if (gate) gate.style.display = 'none';
+    }
+});
